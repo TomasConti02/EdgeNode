@@ -6,7 +6,7 @@ the right srevice.
 ---
 
 ## Architecture
-
+All the project has been executed on top of a Linux distriution as ubuntu 24.04
 EdgeNode is built on top of a modern Kubernetes stack:
 
 - **KServe** → ML model serving and inference
@@ -19,9 +19,9 @@ EdgeNode is built on top of a modern Kubernetes stack:
 
 Before getting started, make sure you have the following tools installed:
 
-- [Docker](https://docs.docker.com/get-docker/) (or another compatible container runtime)
-- [kubectl](https://kubernetes.io/docs/tasks/tools/)
-- [Helm](https://helm.sh/docs/intro/install/)
+- [Docker](https://docs.docker.com/get-docker/) 
+- [kubectl](https://kubernetes.io/docs/tasks/tools/) (by snap is goos as well)
+- [Helm](https://helm.sh/docs/intro/install/) (by snap is goos as well)
 
 ---
 
@@ -62,6 +62,8 @@ The directory mounting point is standard for kserve auto lookup and attach.
 ```bash
 kubectl apply -f Model_local_storing_PVC/pvc.yaml
 ```
+Into a fore advance version of the edge node the inference have to be loaded from a remote repository in cloud.
+
 ### Inference model and trasformer sidecar 
 Deploy the inference model together with its preprocessing/transformer sidecar service using a KServe InferenceService.
 ```bash
