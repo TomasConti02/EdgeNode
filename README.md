@@ -1,44 +1,43 @@
-# 🚀 EdgeNode
+# EdgeNode
 
-**EdgeNode** is a Kubernetes-based AI inference platform designed for serving machine learning models at scale.  
-It leverages **KServe**, **Knative**, and **Istio** to provide a cloud-native, scalable, and production-ready model serving infrastructure.
-
+**EdgeNode** is a Kubernetes-based AI inference platform designed for serving machine learning models into a Edge/Fog Node.
+Inference request come from mobile node by Rest communication and gather by the Gataway, ingress point route the request into
+the right srevice.
 ---
 
-## 🧠 Architecture
+## Architecture
 
 EdgeNode is built on top of a modern Kubernetes stack:
 
 - **KServe** → ML model serving and inference
-- **Knative** → autoscaling and serverless workloads
-- **Istio** → service mesh for traffic management, security, and observability
+- **Knative Serving** → autoscaling and serverless workloads
+- **Istio** → service mesh for traffic management, security, and observability all by sidecar proxyes
 
 ---
 
-## 📦 Prerequisites
+## Prerequisites
 
 Before getting started, make sure you have the following tools installed:
 
 - [Docker](https://docs.docker.com/get-docker/) (or another compatible container runtime)
-- [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
 - [Helm](https://helm.sh/docs/intro/install/)
 
 ---
 
-## 🧩 Supported Cluster Types
+## Supported Cluster Types
 
 EdgeNode can run on different Kubernetes environments:
 
-### 🐳 Kind (recommended for local development)
+### Kind (recommended for local development)
 A lightweight Kubernetes cluster running entirely inside Docker containers.
-
-### 🖥️ K3s on VMs
+- [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
+### K3s on VMs
 A lightweight Kubernetes distribution running on virtual machines managed by a hypervisor.
-
+- [k3s](https://docs.k3s.io/quick-start)
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Create a Kind cluster
 The cluster will be created with:
