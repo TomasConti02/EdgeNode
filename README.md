@@ -88,5 +88,5 @@ POST http://localhost:8080/v1/models/simple-cnn:predict \
      -H "Content-Type: application/json" \
      -d @image.json
 ```
-
+In real applciation scenario this Rest operation is done by the mobile device asking for a heavy inference operation to the edge node passing the cropped image.
 
