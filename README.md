@@ -1,8 +1,9 @@
 ## EdgeNode
----
-EdgeNode is a Kubernetes-based AI inference platform designed for serving machine learning models into a Edge/Fog Node.
-Inference request come from mobile node by Rest communication and gather by the Gataway, ingress point route the request into
-the right srevice.
+
+EdgeNode is a Kubernetes-based AI inference platform designed to serve machine learning models at the edge or in fog computing environments.
+
+Inference requests originate from mobile nodes and are sent via REST communication to the gateway.  
+The ingress layer routes each request to the appropriate service.
 ---
 
 ## Architecture
