@@ -20,8 +20,8 @@ EdgeNode is built on top of a modern Kubernetes stack:
 Before getting started, make sure you have the following tools installed:
 
 - [Docker](https://docs.docker.com/get-docker/) 
-- [kubectl](https://kubernetes.io/docs/tasks/tools/) (by snap is goos as well)
-- [Helm](https://helm.sh/docs/intro/install/) (by snap is goos as well)
+- [kubectl](https://kubernetes.io/docs/tasks/tools/) (by snap is good as well)
+- [Helm](https://helm.sh/docs/intro/install/) (by snap is good as well)
 
 ---
 
