@@ -14,3 +14,7 @@ to delate the k8s kind cluster exec:
 ```bash
 kind delete cluster
 ```
+to launch the kserve configuration and all the dependency:
+```bash
+bash kserve/hack/quick_install.sh
+```
