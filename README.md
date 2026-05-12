@@ -72,6 +72,8 @@ kubectl apply -f InferenceService/inference2.yaml
 kubectl get inferenceservice
 NAME         URL                                     READY   PREV   LATEST   PREVROLLEDOUTREVISION   LATESTREADYREVISION          AGE
 simple-cnn   http://simple-cnn.default.example.com   True           100                              simple-cnn-predictor-00001   6m23s
+```
+```text
 kubectl get pods
 NAME                                                       READY   STATUS    RESTARTS   AGE
 simple-cnn-predictor-00001-deployment-7b9c7f4b9-sf5wp      2/2     Running   0          6m43s
