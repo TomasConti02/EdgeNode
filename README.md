@@ -18,3 +18,7 @@ to launch the kserve configuration and all the dependency:
 ```bash
 bash kserve/hack/quick_install.sh
 ```
+Before starting the testing we have to load the model into the cluster locally into a pv component:
+```bash
+kubectl apply -f ./Model_local_storing_PVC/pvc.yaml
+```
