@@ -67,6 +67,8 @@ kubectl apply -f Model_local_storing_PVC/pvc.yaml
 Deploy the inference model together with its preprocessing/transformer sidecar service using a KServe InferenceService.
 ```bash
 kubectl apply -f InferenceService/inference2.yaml
+```
+```text
 kubectl get inferenceservice
 NAME         URL                                     READY   PREV   LATEST   PREVROLLEDOUTREVISION   LATESTREADYREVISION          AGE
 simple-cnn   http://simple-cnn.default.example.com   True           100                              simple-cnn-predictor-00001   6m23s
