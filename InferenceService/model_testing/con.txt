@@ -1,0 +1,7 @@
+curl -X POST http://localhost:8080/v1/models/simple-cnn:predict \
+     -H "Host: simple-cnn.default.example.com" \
+     -H "Content-Type: application/json" \
+     -d @image.json
+###################################################################
+
+kubectl port-forward --namespace istio-system svc/istio-ingressgateway 8080:80

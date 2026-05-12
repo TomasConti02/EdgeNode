@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: simple-cnn-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: simple-cnn-copy-job
+spec:
+  ttlSecondsAfterFinished: 10
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: model-writer
+        image: tomasconti02/simple-cnn:embed-v2 #docker hub model image into the docker hub repo
+        command: [ "/bin/sh", "-c" ]
+        args: # the directory path is fixed and standard for the serving process to find out the model file 
+        - | #mouting the images into the pod directory 
+          mkdir -p /mnt/models/1;
+          cp -r /app/model/* /mnt/models/1/; 
+          ls -lh /mnt/models/1;
+        volumeMounts:
+        - name: model-storage
+          mountPath: /mnt/models
+      volumes:
+      - name: model-storage
+        persistentVolumeClaim:
+          claimName: simple-cnn-pvc

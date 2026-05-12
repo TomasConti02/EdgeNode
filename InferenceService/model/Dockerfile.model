@@ -1,0 +1,4 @@
+FROM alpine:latest
+WORKDIR /app
+# Copia l'intera directory del modello (SavedModel) dentro /app/model/
+COPY model_repo/1/ ./model/

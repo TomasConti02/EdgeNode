@@ -1,0 +1,23 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: simple-cnn
+spec:
+  predictor:
+    model:
+      modelFormat:
+        name: tensorflow
+      storageUri: "pvc://simple-cnn-pvc/"
+  transformer:
+    containers:
+    - name: kserve-container
+      image: tomasconti02/image-transformer:v12   # new image tag
+      command: ["python", "-m", "transformer"]
+      args:
+      - --model_name
+      - simple-cnn
+      - --predictor_host
+      - "simple-cnn-predictor-00001.default.svc.cluster.local"
+      # Optionally specify port if different from 8080
+      # - --predictor_port
+      # - "8080"

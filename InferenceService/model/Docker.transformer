@@ -1,0 +1,23 @@
+# Dockerfile.transformer
+FROM python:3.9-slim
+
+# Imposta la working directory
+WORKDIR /app
+
+# Aggiorna pip e installa le dipendenze CPU
+RUN pip install --no-cache-dir \
+    kserve==0.11.0 \
+    tensorflow-cpu==2.14.0 \
+    numpy
+
+# Copia il codice del transformer
+COPY transformer3.py /app/transformer.py
+
+# Variabile d'ambiente opzionale per KServe
+ENV TRANSFORMER_NAME=cnn-transformer
+
+# Porta default KServe
+EXPOSE 8080
+
+# Comando di avvio del transformer
+ENTRYPOINT ["python", "transformer.py"]
