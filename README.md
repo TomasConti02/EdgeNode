@@ -9,3 +9,8 @@ To provision a cluster with **one control plane** and **two worker nodes**, use 
 Execute the following command in your terminal:
 ```bash
 kind create cluster --config kind-config.yaml
+```
+to delate the k8s kind cluster exec:
+```bash
+kind delete cluster
+```
