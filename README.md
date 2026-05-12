@@ -22,3 +22,7 @@ Before starting the testing we have to load the model into the cluster locally i
 ```bash
 kubectl apply -f ./Model_local_storing_PVC/pvc.yaml
 ```
+For the inference service component and the trasformer related to him:
+```bash
+kubectl apply -f InferenceService/inference2.yaml
+```
