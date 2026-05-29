@@ -11,7 +11,7 @@ spec:
   transformer:
     containers:
     - name: kserve-container
-      image: tomasconti02/image-transformer:v12   # new image tag
+      image: tomasconti02/image-transformer:v13   # new image tag
       command: ["python", "-m", "transformer"]
       args:
       - --model_name

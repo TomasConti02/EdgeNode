@@ -21,12 +21,12 @@ spec:
       restartPolicy: OnFailure
       containers:
       - name: model-writer
-        image: tomasconti02/simple-cnn:embed-v2 #docker hub model image into the docker hub repo
+        image: tomasconti02/mnist-embedding-model:1
         command: [ "/bin/sh", "-c" ]
-        args: # the directory path is fixed and standard for the serving process to find out the model file 
-        - | #mouting the images into the pod directory 
+        args:
+        - |
           mkdir -p /mnt/models/1;
-          cp -r /app/model/* /mnt/models/1/; 
+          cp -r /app/model/* /mnt/models/1/;
           ls -lh /mnt/models/1;
         volumeMounts:
         - name: model-storage

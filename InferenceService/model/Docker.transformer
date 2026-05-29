@@ -20,4 +20,4 @@ ENV TRANSFORMER_NAME=cnn-transformer
 EXPOSE 8080
 
 # Comando di avvio del transformer
-ENTRYPOINT ["python", "transformer.py"]
+ENTRYPOINT ["python", "transformer3.py"]
