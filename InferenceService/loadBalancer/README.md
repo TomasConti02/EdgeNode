@@ -43,7 +43,6 @@ Check is now gataway is bound:
 kubectl get svc -n istio-system istio-ingressgateway
 NAME                   TYPE           CLUSTER-IP    EXTERNAL-IP      PORT(S)                                      AGE
 istio-ingressgateway   LoadBalancer   10.96.64.84   172.18.255.200   15021:32269/TCP,80:32020/TCP,443:32762/TCP   3h53m
-tomas@tomas-ThinkPad-T15-Gen-2i:~/Desktop/EdgeNode/InferenceService/loadBalancer$ 
 ```
 Now there is a testing loadbalancer and can be avoid port forwarding.
 Go back to the ./model_testing dir and launch:
