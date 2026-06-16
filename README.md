@@ -77,10 +77,20 @@ The setup installs the following main components:
 - KServe → ML model serving and inference
 - cert-manager → automatic TLS certificate management
 - 
-Start setup operation:
+Clone the repo kserve:
 
 ```bash
-bash kserve/hack/quick_install.sh
+git clone https://github.com/kserve/kserve
+```
+
+launch:
+
+```bash
+bash ./kserve/hack/kserve-install.sh 
+```
+Check system:
+```bash
+kubectl get pods -A
 ```
 
 ## Istio Ingress Gateway Tunneling
