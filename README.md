@@ -2,6 +2,14 @@
 
 EdgeNode is a Kubernetes-based AI inference platform designed to serve machine learning models into 5G k8s computing environments.
 
+--------------------------------------------------------------------------
+
+### Kiali high level view of the system result
+
+![Demo Kiali Inference](sample/stream.gif)
+
+-------------------------------------------------------------------------
+
 I'm testing deployment on my PC with limited resources.
 
 For this reason there are some mock elements:
@@ -49,8 +57,6 @@ A lightweight Kubernetes cluster running entirely inside Docker containers.
 A lightweight Kubernetes distribution running on virtual machines managed by a hypervisor.
 - [k3s](https://docs.k3s.io/quick-start)
 
---------------------------------------------------------------------------
-![Demo Kiali Inference](sample/stream.gif)
 --------------------------------------------------------------------------
 ## Quick Start
 
