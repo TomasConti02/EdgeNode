@@ -201,6 +201,7 @@ Kiali allows tracking service mesh traffic!
 ![Demo Kiali Inference](sample/stream.gif)
 
 Traffic enters through the Istio gateway, while the Knative gateway maintains the service mesh traffic rules and redirects traffic to each service mesh entrypoints. The Knative Serving operator keeps track of the service proxy mesh traffic entrypoints.
+
 -------------------------------------------------------------------------------
 
 ### Deploy by yaml manifests
