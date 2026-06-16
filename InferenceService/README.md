@@ -1,55 +1,54 @@
+### Directories
+    - ./model  --> models and transformers container image creation
+    - ./model_storage --> yaml manifest for model storage
+    - ./model_testing --> commands for inference testing
+    - ./loadBalancer --> yaml manifest and configuration of a LoadBlancer
+    
+-------------------------------------------------------------------------
 ### Deploy by yaml manifests
 
-The mock inference model is loaded localy into the cluster into a PV.
-The directory mounting point is standard for kserve auto lookup and attach.
+Creation of the PVC and PV locally. Mount a volume with the inference model's weights
 ```bash
-kubectl apply -f Model_local_storing_PVC/pvc.yaml
-```
-Into a fore advance version of the edge node the inference have to be loaded from a remote repository in cloud.
-
-### Inference model and trasformer sidecar 
-Deploy the inference model together with its preprocessing/transformer sidecar service using a KServe InferenceService.
-```bash
-
-kubectl apply -f InferenceService/inference2.yaml
-
+kubectl apply -f model_storage/single-pvc.yaml
 ```
 ```text
-kubectl get inferenceservice
-NAME         URL                                     READY   PREV   LATEST   PREVROLLEDOUTREVISION   LATESTREADYREVISION          AGE
-
-simple-cnn   http://simple-cnn.default.example.com   True           100                              simple-cnn-predictor-00001   6m23s
+kubectl get pvc
+NAME                  STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+simple-cnn-pvc        Bound    pvc-11acdcb1-e03a-43c4-add2-c07c069e50e9   100Mi      RWO            standard       <unset>                 3h27m
+kubectl get pv
+NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                         STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
+pvc-11acdcb1-e03a-43c4-add2-c07c069e50e9   100Mi      RWO            Delete           Bound    default/simple-cnn-pvc        standard       <unset>                          3h28m
 
 ```
-```text
+Deploy of the inference kserve model:
+```bash
+kubectl apply -f inference-single.yaml
 
+```
+Inference model load the weights form the local storage. 
+```text
 kubectl get pods
-NAME                                                       READY   STATUS    RESTARTS   AGE
-
-simple-cnn-predictor-00001-deployment-7b9c7f4b9-sf5wp      2/2     Running   0          6m43s
-
-simple-cnn-transformer-00001-deployment-64576945cf-qj782   2/2     Running   0          6m43s
+NAME                                                            READY   STATUS    RESTARTS   AGE
+simple-cnn-predictor-00001-deployment-8467f6bb67-7xjvg          2/2     Running   0          3h25m
+simple-cnn-transformer-00001-deployment-85c9f44cfd-gc74l        2/2     Running   0          3h25m
 
 ```
-### Inference testing by Rest POST operation as :
-You can test the deployed model using a REST POST request:
-```bash
 
+You can test the deployed model using a REST POST request:
+
+```bash
  curl -X POST http://localhost:8080/v1/models/simple-cnn:predict \
      -H "Host: simple-cnn.default.example.com" \
-
      -H "Content-Type: application/json" \
-
      -d @image.json
-
 {
-
 "predicted_class":0,
 "probabilities":[0.109329447,.....,0.0744211152],
 "embedding"[0.0178625677,0.132521331,....,0.0090905251,0.184597969]
 }
-
 ```
-In real applciation scenario this Rest operation is done by the mobile device asking for a heavy inference operation to the edge node passing the cropped image.
+
+Same steps for the deploy of multi-pvc.yaml and inference-multi.yaml.
+
 
 
