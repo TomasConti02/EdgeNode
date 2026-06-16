@@ -1,3 +1,0 @@
-{{- if .Values.kserve.llmisvcConfigs.enabled }}
-{{ .Files.Get "files/llmisvcconfigs/resources.yaml" }}
-{{- end }}

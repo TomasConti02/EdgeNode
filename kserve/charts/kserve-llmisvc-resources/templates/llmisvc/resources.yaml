@@ -1,5 +1,0 @@
-{{- include "kserve-common.renderMultiResourceWithPatches" (dict
-  "baseFile" "files/llmisvc/resources.yaml"
-  "patchGlob" "files/llmisvc/*-patch.yaml"
-  "certName" "llmisvc-serving-cert"
-  "context" .) -}}
