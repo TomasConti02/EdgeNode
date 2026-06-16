@@ -1,4 +1,9 @@
+docker login
 
 docker build -t mnist-embedding-model:1 -f Dockerfile.model .
 docker tag mnist-embedding-model:1 tomasconti02/mnist-embedding-model:1
 docker push tomasconti02/mnist-embedding-model:1
+
+docker build -t image-transformer:v14 -f Dockerfile.transformer .
+docker tag image-transformer:v14 tomasconti02/image-transformer:v14
+docker push tomasconti02/image-transformer:v14

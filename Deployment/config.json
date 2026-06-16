@@ -1,0 +1,19 @@
+{
+  "kubeconfig_path": null,
+  "models": [
+    {
+      "name": "simple-cnn",
+      "image": "tomasconti02/mnist-embedding-model:1",
+      "storage_size": "100Mi",
+      "transformer_image": "tomasconti02/transformer_final:v1",
+      "transformer_image2": "tomasconti02/image-transformer:v14"
+    },
+    {
+      "name": "simple-cnn-test",
+      "image": "tomasconti02/mnist-embedding-model:1",
+      "storage_size": "200Mi",
+      "transformer_image": "tomasconti02/transformer_final:v1",
+      "transformer_image2": "tomasconti02/image-transformer:v14"
+    }
+  ]
+}

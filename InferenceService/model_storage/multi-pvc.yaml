@@ -1,0 +1,80 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: simple-cnn-pvc
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: simple-cnn-copy-job
+  namespace: default
+spec:
+  ttlSecondsAfterFinished: 10
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: model-writer
+        image: tomasconti02/mnist-embedding-model:1
+        command: [ "/bin/sh", "-c" ]
+        args:
+        - |
+          mkdir -p /mnt/models/1;
+          cp -r /app/model/* /mnt/models/1/;
+          ls -lh /mnt/models/1;
+        volumeMounts:
+        - name: model-storage
+          mountPath: /mnt/models
+      volumes:
+      - name: model-storage
+        persistentVolumeClaim:
+          claimName: simple-cnn-pvc
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: simple-cnn-test-pvc
+  namespace: default
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: simple-cnn-test-copy-job
+  namespace: default
+spec:
+  ttlSecondsAfterFinished: 10
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: model-writer
+        image: tomasconti02/mnist-embedding-model:1 
+        command: [ "/bin/sh", "-c" ]
+        args:
+        - |
+          mkdir -p /mnt/models/1;
+          cp -r /app/model/* /mnt/models/1/;
+          ls -lh /mnt/models/1;
+        volumeMounts:
+        - name: model-storage
+          mountPath: /mnt/models
+      volumes:
+      - name: model-storage
+        persistentVolumeClaim:
+          claimName: simple-cnn-test-pvc

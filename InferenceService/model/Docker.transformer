@@ -11,7 +11,7 @@ RUN pip install --no-cache-dir \
     numpy
 
 # Copia il codice del transformer
-COPY transformer3.py /app/transformer.py
+COPY transformer_final.py /app/transformer.py
 
 # Variabile d'ambiente opzionale per KServe
 ENV TRANSFORMER_NAME=cnn-transformer
@@ -20,4 +20,4 @@ ENV TRANSFORMER_NAME=cnn-transformer
 EXPOSE 8080
 
 # Comando di avvio del transformer
-ENTRYPOINT ["python", "transformer3.py"]
+ENTRYPOINT ["python", "transformer.py"]
