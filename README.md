@@ -12,10 +12,10 @@ For this reason there are some mock elements:
 - models weight are not loaded from a registry in cloud but are locally stored into pv
 
 Kserve allow to:
-- scale in-out inference services
+- scale in-out and to zero inference services
 - deploy workload into gpu-cpu
 - define priority for the runtime scheduler 
-
+- service mesh for traffic routing configuration, rollback and roll up with different policy as canary release, blue-green release
 ---
 
 ## Architecture
@@ -187,7 +187,20 @@ python3 deploy-multi.py --delete
 7. **Transformer** postprocesses: extracts `predicted_class`, `probabilities`, `embedding`
 
 8. **Gateway** returns final JSON response to client
+--------------------------------------------------------------------------
+### Kiali 
+execute the Observer:
+```bash
+cd Observation/
+chmod +x install-monitoring.sh 
+bash install-monitoring.sh 
+kubectl port-forward svc/kiali -n istio-system 20001:20001
+```
+Kiali allows tracking service mesh traffic!
+
 ![Demo Kiali Inference](sample/stream.gif)
+
+Traffic enters through the Istio gateway, while the Knative gateway maintains the service mesh traffic rules and redirects traffic to each service mesh entrypoints. The Knative Serving operator keeps track of the service proxy mesh traffic entrypoints.
 -------------------------------------------------------------------------------
 
 ### Deploy by yaml manifests
