@@ -1,8 +1,8 @@
 ### Directories
-    - ./model  --> models and transformers container image creation
-    - ./model_storage --> yaml manifest for model storage
-    - ./model_testing --> commands for inference testing
-    - ./loadBalancer --> yaml manifest and configuration of a LoadBlancer
+- ./model  --> models and transformers container image creation
+- ./model_storage --> yaml manifest for model storage
+- ./model_testing --> commands for inference testing
+- ./loadBalancer --> yaml manifest and configuration of a LoadBlancer
     
 -------------------------------------------------------------------------
 ### Deploy by yaml manifests
