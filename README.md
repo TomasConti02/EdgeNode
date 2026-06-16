@@ -173,7 +173,7 @@ python3 deploy-multi.py --delete
   [DELETED] InferenceService
   [DELETED] PVC
 ```
-## Workflow (short)
+## Workflow 
 
 1. **Client** → POST to the istio gataway `http://localhost:8080/v1/models/<model>:predict`  
    Header `Host: <model>.<namespace>.example.com` allow Istio the detect the target
