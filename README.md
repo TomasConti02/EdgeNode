@@ -1,6 +1,6 @@
 ## EdgeNode
 
-EdgeNode is a Kubernetes-based AI inference platform designed to serve machine learning models into 5G k8s computing environments.
+Edge Node is a Kubernetes-based AI inference platform designed to serve machine learning models into 5G k8s computing environments.
 
 --------------------------------------------------------------------------
 
@@ -15,24 +15,25 @@ I'm testing deployment on my PC with limited resources.
 For this reason there are some mock elements:
 
 - CNN models 
-- pre-processing, i have to figure out the right way to implement it
-- there is not a load balancer for the istio gataway
-- models weight are not loaded from a registry in cloud but are locally stored into pv
+- pre-processing, i have to figure out the right way how to implement it
+- there is not a load balancer for the istio gateway
+- models weight are not loaded from a registry in cloud but are locally stored into PVs
 
 Kserve allow to:
 - scale in-out and to zero inference services
 - deploy workload into gpu-cpu
 - define priority for the runtime scheduler 
-- service mesh for traffic routing configuration, rollback and roll up with different policy as canary release, blue-green release
+- traffic routing configuration by service mesh, managing rollbacks and version upgrades with various deployment strategies, including canary and blue-green releases
 ---
 
 ## Architecture
-All the project has been executed on top of a Linux distriution as ubuntu 24.04
-EdgeNode is built on top of a modern Kubernetes stack:
+All the project has been executed on top of a Linux distriution as ubuntu 24.04.
+
+EdgeNode has been developed on top of a Kubernetes stack:
 
 - **KServe** → ML model serving and inference
 - **Knative Serving** → autoscaling and serverless workloads
-- **Istio** → service mesh for traffic management, security, and observability all by sidecar proxyes
+- **Istio** → service mesh for traffic management, security, and observability
 
 ---
 
@@ -54,7 +55,7 @@ EdgeNode can run on different Kubernetes environments:
 A lightweight Kubernetes cluster running entirely inside Docker containers.
 - [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
 ### K3s on VMs
-A lightweight Kubernetes distribution running on virtual machines managed by a hypervisor.
+A lightweight Kubernetes distribution running on virtual machines managed by a hypervisor as VirtualBox.
 - [k3s](https://docs.k3s.io/quick-start)
 
 --------------------------------------------------------------------------
@@ -74,7 +75,7 @@ kind create cluster --config kind-config.yaml
 The setup installs the following main components:
 - Istio → service mesh for traffic management, security, and observability
 - Knative → autoscaling and serverless workloads
-- KServe → ML model serving and inference
+- KServe → ML model serving and inference orchestration
 - cert-manager → automatic TLS certificate management
 - 
 Clone the repo kserve:
