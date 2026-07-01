@@ -41,7 +41,7 @@ EdgeNode has been developed on top of a Kubernetes stack:
 
 Before getting started, make sure you have the following tools installed:
 
-- [Docker](https://docs.docker.com/get-docker/) 
+- [Docker]( https://docs.docker.com/get-docker/](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-22-04) ) 
 - [kubectl](https://kubernetes.io/docs/tasks/tools/) (by snap is good as well)
 - [Helm](https://helm.sh/docs/intro/install/) (by snap is good as well)
 
