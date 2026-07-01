@@ -4,7 +4,7 @@ This deployment supports two distinct **Kafka cluster** configurations: a **Sing
 
 The Kafka cluster deployment is managed by the **Strimzi Operator** ([strimzi.io](https://strimzi.io/)), which simplifies deploying and configuring Kafka clusters inside Kubernetes. An operator is a custom Kubernetes controller that extends the native Kubernetes API, automatically managing the deployment, configuration, and full lifecycle of a specific resource.
 
-For cluster coordination and data synchronization, this architecture uses the **KRaft (Kafka Raft)** consensus algorithm instead of **Apache ZooKeeper**. Under KRaft, a message is committed to the log as soon as a majority of the replica nodes acknowledge they have received it. In the event of a broker node failure, a automatic leader election is triggered, selecting the node with the most up-to-date local log state. In terms of the **CAP theorem**, this system prioritizes Consistency and Availability within a single-fault domain system (such as a single Kubernetes cluster), ensuring a highly robust, fault-tolerant environment without traditional network partition overhead.
+For cluster coordination and data synchronization, this architecture uses the **KRaft (Kafka Raft)** consensus algorithm instead of **Apache ZooKeeper**. Under KRaft, a message is committed to the log as soon as a majority of the replica nodes acknowledge they have received it. In the event of a broker node failure, a automatic leader election is triggered, selecting the node with the most up-to-date local log state. In terms of the **CAP theorem**, this system prioritizes Consistency and Availability within a single-fault domain system (such as a single Kubernetes cluster), ensuring a highly robust, fault-tolerant environment.
 
 ```bash
 kubectl get pods -n kafka
@@ -28,18 +28,18 @@ Topic: my-topic    TopicId: d7ZuzZuKQNm9OYvr6BqL3g    PartitionCount: 1    Repli
 ```
 
 Part 1: Topic Overview
-- Topic: my-topic: The name of your message stream.
+- Topic: my-topic: The name the message stream topic.
 
 - PartitionCount: 1: The topic has only one data pipeline (Partition 0). All messages travel down this single lane, which guarantees they are processed in the exact order they are received.
 
-- ReplicationFactor: 3: There are three exact copies of this partition running across your cluster to protect against data loss.
+- ReplicationFactor: 3: There are three exact copies of this partition running across the cluster to protect against data loss.
 
-- min.insync.replicas=2: This is a data-safety rule. It means a producer cannot successfully write a message unless at least 2 out of the 3 nodes confirm they have saved it.
+- min.insync.replicas=2: This is a data-safety rule. It means a producer cannot successfully write/commit a message unless at least 2 out of the 3 nodes confirm they have saved it [ Raft consistency ].
 
 Part 2: Partition Detail
 - Partition: 0: Identifies the specific partition being described (since count is 1, only Partition 0 exists).
 
-- Leader: 0: Broker node 0 (my-cluster-dual-role-0) is the active "brain" for this partition. Your applications talk directly to node 0 to send or read data.
+- Leader: 0: Broker node 0 (my-cluster-dual-role-0) is the active "brain" for this partition. Messaggies goes directly to node 0 when send or read data.
 
 - Replicas: 0,1,2: The physical copies of the data live on broker nodes 0, 1, and 2.
 
