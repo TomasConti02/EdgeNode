@@ -21,7 +21,7 @@ Using Kafka as the backing store for Knative Brokers ensures high throughput, pe
 
 Architecture Overview
 
-The architecture relies on an event-driven, decoupled pattern consisting of two main components:
+The architecture relies on an event-driven, decoupled in time and space pattern consisting of two main components:
 1. ConfigMap: Defines how Knative connects to the Kafka cluster and how it should provision underlying Kafka topics.
 2. Broker: Acts as the central event hub and entry point for all incoming events within the namespace.
 
@@ -59,7 +59,7 @@ kubectl get broker kafka-broker -n default
 NAME           URL                                                                                   AGE   READY   REASON
 kafka-broker   http://kafka-broker-ingress.knative-eventing.svc.cluster.local/default/kafka-broker   10m   True    
 ```
-Broker is the central event hub. Supported by Apache, it securely stores incoming events(that are messages), enabling the system to decouple services in both time and space. Trigger is the router or "bridge" between the Broker and your Consumer service. It defines a declarative routing rule by filtering events based on their metadata attributes and allow routing to the consumer target.
+Broker is the central event hub. Supported by Kafka, it securely stores incoming events(that are messages) streams, enabling the system to decouple services in both time and space. Trigger is the router or "bridge" between the Broker and your Consumer service. It defines a declarative routing rule by filtering events based on their metadata attributes and allow routing to the consumer target.
 
 1. Send: The producer sends an HTTP request containing a CloudEvent directly to the local cluster URL of the kafka-broker. CloudEvent is a standard HTTP REST request (usually an HTTP POST with a JSON body), but it includes specific metadata headers (like ce-type, ce-id, and ce-source).
 
