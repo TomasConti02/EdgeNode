@@ -1,19 +1,21 @@
 {
   "kubeconfig_path": null,
+  "broker": "http://kafka-broker-ingress.knative-eventing.svc.cluster.local/default/kafka-broker",
+  "broker_host": "kafka-broker-ingress.knative-eventing.svc.cluster.local",
+  "ce_type": "org.kubeflow.serving.inference.request",
+  "predictor_port": 8080,
   "models": [
     {
       "name": "simple-cnn",
       "image": "tomasconti02/mnist-embedding-model:1",
       "storage_size": "100Mi",
-      "transformer_image": "tomasconti02/transformer_final:v1",
-      "transformer_image2": "tomasconti02/image-transformer:v14"
+      "transformer_image": "tomasconti02/transformer_final:v9"
     },
     {
       "name": "simple-cnn-test",
       "image": "tomasconti02/mnist-embedding-model:1",
       "storage_size": "200Mi",
-      "transformer_image": "tomasconti02/transformer_final:v1",
-      "transformer_image2": "tomasconti02/image-transformer:v14"
+      "transformer_image": "tomasconti02/transformer_final:v9"
     }
   ]
 }

@@ -1,4 +1,3 @@
-
 import time
 import argparse
 import json
@@ -24,7 +23,7 @@ def wait_for_pvc_bound(core_v1_api, pvc_name, namespace, timeout=120, check_inte
     raise TimeoutError(f"Timeout reached! PVC '{pvc_name}' did not become Bound.")
 
 
-def deploy_models(models_list, namespace="default", kubeconfig_path=None):
+def deploy_models(  models_list,  namespace="default",  kubeconfig_path=None,  broker=None,  broker_host=None,  ce_type=None,  predictor_port=8080, ):
 
     if kubeconfig_path:
         config.load_kube_config(config_file=kubeconfig_path) #path for a k8s cluster
@@ -132,9 +131,12 @@ def deploy_models(models_list, namespace="default", kubeconfig_path=None):
                         "image": transformer_image,
                         "command": ["python", "-m", "transformer"], # at the container boot exec the transformer
                         "args": [
-                            "--model_names", all_model_names, #here model name list based on the json conf
-                            "--namespace", namespace          
-                        ]
+                            "--model_names", all_model_names,
+                            "--namespace", namespace,
+                            "--predictor_port", str(predictor_port),
+                            "--broker", broker,
+                            "--broker_host", broker_host,
+                            "--ce_type", ce_type]
                     }]
                 }
             }
@@ -165,9 +167,11 @@ def delete_models(models_list, namespace="default", kubeconfig_path=None):
         config.load_kube_config(config_file=kubeconfig_path)
     else:
         config.load_kube_config() #from the load kube conf file, file for kind cluster
+
     core_v1 = client.CoreV1Api()
     batch_v1 = client.BatchV1Api()
     custom_api = client.CustomObjectsApi()
+    
     print(f"==> Starting cleanup in namespace: '{namespace}'\n")
     for model_item in models_list:
         if isinstance(model_item, str):
@@ -224,9 +228,13 @@ if __name__ == "__main__":
 
     my_models = config_data.get("models", []) #load the models setting into the conf file 
     kubeconfig_path = config_data.get("kubeconfig_path", None) #path for the kube conf file 
+    broker = config_data.get( "broker", "http://kafka-broker-ingress.knative-eventing.svc.cluster.local/default/kafka-broker" )
+    broker_host = config_data.get( "broker_host", "kafka-broker-ingress.knative-eventing.svc.cluster.local" )
+    ce_type = config_data.get( "ce_type", "org.kubeflow.serving.inference.request" )
 
+    predictor_port = config_data.get("predictor_port", 8080)
     if args.deploy:
-        deploy_models(my_models, namespace=args.namespace, kubeconfig_path=kubeconfig_path)
+        deploy_models( my_models, namespace=args.namespace, kubeconfig_path=kubeconfig_path, broker=broker, broker_host=broker_host, ce_type=ce_type, predictor_port=predictor_port )
 
     if args.delete:
         delete_models(my_models, namespace=args.namespace, kubeconfig_path=kubeconfig_path)
