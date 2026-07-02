@@ -8,7 +8,7 @@ RUN pip install --no-cache-dir \
     numpy \
     aiohttp==3.9.5   # <-- required for asynchronous HTTP calls
 
-COPY transformer_network3.py /app/transformer.py
+COPY transformer_final.py /app/transformer.py
 
 ENV TRANSFORMER_NAME=cnn-transformer
 
