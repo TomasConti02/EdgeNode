@@ -3,7 +3,7 @@
 Edge Node is a Kubernetes-based AI inference platform designed to serve machine learning models into 5G k8s computing environments.
 main files:
 - [ RestAPI interface ](RestAPI/RestAPI.py)
-- [ RestAPI interface ](InferenceService/model/transformer_final.py)
+- [ Inference entry point ](InferenceService/model/transformer_final.py)
 --------------------------------------------------------------------------
 
 ### Kiali high level view of the system result
