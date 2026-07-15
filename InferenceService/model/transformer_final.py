@@ -59,17 +59,26 @@ class ImageTransformer(Model):
             logger.error( f"Kafka error: {e}" )
         finally:
             self.event_queue.task_done() #mark the corutine task done
+    # http header request -> Content-Type: application/octet-stream | Content-Type: image/jpeg
+    def preprocess( self, payload: bytes, headers: Optional[Dict[str, str]] = None, ): #mange the pre processing of the http inference request from the rest api through istio
+        logger.info("RAW IMAGE RECEIVED bytes=%d", len(payload))
 
+        content_type = ( headers.get("content-type", "") if headers else "" ).lower() # read the request content type 
 
-    def preprocess(   self,  payload: bytes,  headers: Optional[Dict[str,str]]=None ): #raw image pre processing
-        logger.info(f"RAW IMAGE RECEIVED bytes={len(payload)}")
-        img_tensor = tf.io.decode_image(payload, channels=3, expand_animations=False) #very fast c++ wrapper byte decoder 
-        img_tensor = tf.expand_dims(img_tensor, axis=0)
-        img_tensor = tf.image.rgb_to_grayscale(img_tensor)  # Shape: (1, 28, 28, 1)
+        if content_type == "application/octet-stream": #  Raw RGB uint8: 224 x 224 x 3
+            img_tensor = tf.io.decode_raw(payload, tf.uint8) #read the raw payload and creat a uint8 array of images byte 
+            img_tensor = tf.reshape(img_tensor, [224, 224, 3]) # create the standard inference input images
+        else:# JPEG / PNG / BMP / GIF
+            img_tensor = tf.io.decode_image( payload, channels=3, expand_animations=False,  ) #de-compless the payload according to the image input formate
+
+        img_tensor = tf.expand_dims(img_tensor, axis=0) # create a batch -> batch x height x width x channels = 1 x 224 x 224 x 3
+        ##### the following tf operation are executed because mock inference model compatibility ################################################
+        img_tensor = tf.image.rgb_to_grayscale(img_tensor)
         img_tensor = tf.image.resize(img_tensor, [28, 28])
         img_tensor = tf.cast(img_tensor, tf.float32) / 255.0
-        return {"instances": img_tensor.numpy().tolist()}
 
+        return {    "instances": img_tensor.numpy().tolist()}
+        
     def postprocess( self, outputs: Dict[str,Any], headers=None ):
         logger.info( f"Predictor output: {outputs}" )
         preds = outputs["predictions"]
