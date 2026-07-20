@@ -187,17 +187,6 @@ async def save_state(): #save the ood detector snapshot and redis in memory
         return
     log.info("Saving state to Redis and fallback file...")
     state = detector.get_state()
-    #this binary byte string can be store as a snapshot
-    #serialized = pickle.dumps(state) #create the snapshot file with the ood detector acttribute state
-    # Option Once try to read the snapshot data into the redis db 
-    """
-    try:
-        await asyncio.wait_for( redis_client.set(STATE_KEY, serialized ), timeout=1.0) #asynch
-        log.info("State saved to Redis")
-    except Exception as e:
-        log.warning(f"Redis save failed: {e}")
-    # second use the pvc - pv for snapshot storing
-    """
     try:
         os.makedirs( os.path.dirname(FALLBACK_FILE), exist_ok=True) #create is not present a dir for the snapshot file into the persistent pvc-pv
         with open(FALLBACK_FILE, "wb") as f:
@@ -208,19 +197,6 @@ async def save_state(): #save the ood detector snapshot and redis in memory
 
 async def restore_state():
     global detector
-    """
-    if redis_client is not None:
-        try:
-            data = await redis_client.get(STATE_KEY)
-            if data is not None:
-                st = pickle.loads(data)
-                detector = init_detector()
-                detector.set_state(st)
-                log.info("State restored from Redis")
-                return
-        except Exception as e:
-            log.warning(f"Redis restore failed: {e}")
-    """
     if os.path.exists(FALLBACK_FILE):
         try:
             with open(FALLBACK_FILE, "rb") as f:
