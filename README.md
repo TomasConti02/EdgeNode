@@ -5,6 +5,8 @@ main files:
 - [ RestAPI interface ](RestAPI/RestAPI.py)
 - [ Inference entry point ](InferenceService/model/transformer_final.py)
 - [ Strimzi Kafka cluster ](Knative_Eventing/Kafka/Kafka_cluster_multi_node.yaml)
+- [ OOD detector ](Drift/driftv6.py)
+
 --------------------------------------------------------------------------
 
 ### Kiali high level view of the system result
