@@ -51,35 +51,38 @@ async def forward(img: bytes, model: str, content_type: str, image_key: str):
         return {"model": model, "error": str(exc), "image_key": image_key}
 
 ##########################################################################################################################################
-async def store_image_to_detector(img: bytes, filename: str, content_type: str, model: str, image_key: str):
-
-    detector_host = f"ood-detector-{model}.default.example.com" # this host information is used by istio gateways for internal routing to the target
-    files = {  "file": (filename, img, content_type )  }
-    data = { "ttl": "7200", #ttl of the data for redis
-            "metadata": model,
-            "image_key": image_key }
+async def store_image_to_detector( img: bytes,  filename: str,  content_type: str,  model: str,  image_key: str ):
+    detector_host = f"ood-detector-{model}.default.example.com"
+    # pack metadata into http header
+    headers = {
+        "Host": detector_host,
+        "Content-Type": content_type or "application/octet-stream",
+        "X-Filename": filename,
+        "X-TTL": "7200",
+        "X-Metadata": model,
+        "X-Image-Key": image_key,
+    }
     try:
-        response = await httpx_client.post( # I/O netwrok no blocking operation 
-            f"{ISTIO_GATEWAY}/store_image", # the call is directed to the istio gataway, asking for the store image endpoint 
-            headers={"Host": detector_host}, #header define the istio internal target. I can keep the same endpoint fix and change only this header 
-            files=files, #file into the payload with images and internal content type 
-            data=data, #image metadata 
+        response = await httpx_client.post(
+            f"{ISTIO_GATEWAY}/store_image",
+            headers=headers,
+            content=img,  # Sends raw binary body directly
         )
         response.raise_for_status()
-        logger.info("OK image has been saved with Redis key : %s", image_key)
+        logger.info("OK image has been saved with Redis key: %s", image_key)
     except Exception:
-        logger.exception("ERROR image has been saved with Redis key: %s", image_key)
-        
+        logger.exception("ERROR saving image with Redis key: %s", image_key)
 ##########################################################################################################################################
 """
 curl -X POST "http://localhost:8080/predict_encoded" -H "Host: image-api.default.example.com" -F "image=@immagine.png" -F "model=simple-cnn"
 """
 @app.post("/predict_encoded")
 async def predict_encoded(image: UploadFile = File(...), model: str = Form(...)):
-    img = await image.read()
-    image_key = str(uuid.uuid4()) #create the unique key 
-    result = await forward(img, model, image.content_type or "image/jpeg", image_key)
-    asyncio.create_task(store_image_to_detector(img, image.filename, image.content_type or "image/jpeg", model, image_key))
+    img = await image.read() #image container the raw binary data
+    image_key = str(uuid.uuid4()) #create the unique key VERY IMPORTANT FOR THE LINK OF THE SYSTEM 
+    result = await forward(img, model, image.content_type or "image/png", image_key)
+    #not wait for the redis response, a corutine task manage it and the client receive the inference response ass soon as possible
+    asyncio.create_task(store_image_to_detector(img, image.filename, image.content_type or "image/png", model, image_key))
     if "error" in result:
         raise HTTPException(status_code=500, detail=result["error"])
     return {"predicted_class": result["predicted_class"], "image_key": image_key}
@@ -103,12 +106,12 @@ async def predict_batch_encoded(files: List[UploadFile] = File(...), models: str
     images = await asyncio.gather(*(f.read() for f in files))
     image_keys = [str(uuid.uuid4()) for _ in range(len(files))]
     predictions = await asyncio.gather(*(
-        forward(img, model, file.content_type or "image/jpeg", key)
+        forward(img, model, file.content_type or "image/png", key)
         for img, file, model, key in zip(images, files, model_list, image_keys)
     ))
     for img, file, model, key in zip(images, files, model_list, image_keys):
         asyncio.create_task(
-            store_image_to_detector(img, file.filename, file.content_type or "image/jpeg", model, key)
+            store_image_to_detector(img, file.filename, file.content_type or "image/png", model, key)
         )
     return {"predictions": predictions}
 
