@@ -11,7 +11,7 @@ from kserve import Model, ModelServer
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class ImageTransformer(Model):
+class ImageTransformer(Model): #kserve sdk component
     def __init__(self, name, namespace,
                  broker="http://kafka-broker-ingress.knative-eventing.svc.cluster.local/default/kafka-broker",
                  broker_host="kafka-broker-ingress.knative-eventing.svc.cluster.local",
@@ -43,7 +43,7 @@ class ImageTransformer(Model):
                 asyncio.create_task(self._send_batch(session, event_data))
 
     async def _send_batch(self, session, event_data):
-        preds = event_data["predictions"]
+        preds = event_data["predictions"] # inference batch possibility
         image_key = event_data["image_key"]
         
         payload = {
@@ -51,12 +51,12 @@ class ImageTransformer(Model):
             "instances": [p["embedding"][:4] for p in preds]  # reduce to 4 because better for debugging
         }
         
-        headers = {
-            "Host": self.broker_host,
-            "Ce-Id": str(uuid.uuid4()), 
+        headers = { #metadata trough the header 
+            "Host": self.broker_host, #used by istio for routing
+            "Ce-Id": str(uuid.uuid4()), # unique id for the message event in kafka
             "Ce-Specversion": "1.0",
-            "Ce-Type": self.ce_type,
-            "Ce-Source": self.name,
+            "Ce-Type": self.ce_type,  #event domain -> org.kubeflow.serving.inference.request
+            "Ce-Source": self.name, 
             "Content-Type": "application/json",
             "X-Image-Key": image_key  # image redis key
         }
@@ -78,46 +78,38 @@ class ImageTransformer(Model):
 
         content_type = headers.get("content-type", "").lower()
 
-        if content_type == "application/octet-stream":
+        if content_type == "application/octet-stream": #raw images 
             img_tensor = tf.io.decode_raw(payload, tf.uint8)
             img_tensor = tf.reshape(img_tensor, [224, 224, 3])
-        else:
+        else: # png image
             img_tensor = tf.io.decode_image(payload, channels=3, expand_animations=False)
 
         img_tensor = tf.expand_dims(img_tensor, axis=0)
-        img_tensor = tf.image.rgb_to_grayscale(img_tensor) 
-        img_tensor = tf.image.resize(img_tensor, [28, 28])
-        img_tensor = tf.cast(img_tensor, tf.float32) / 255.0
-
-        return {
-            "instances": img_tensor.numpy().tolist(),
-            "image_key": image_key
-        }
-        
+        img_tensor = tf.image.rgb_to_grayscale(img_tensor)#mock
+        img_tensor = tf.image.resize(img_tensor, [28, 28]) #mock
+        img_tensor = tf.cast(img_tensor, tf.float32) / 255.0 #if the model input activation change i have also to change this 
+ 
+        return { "instances": img_tensor.numpy().tolist(), "image_key": image_key  }
+    """
+    there is a logic error hear -> this component have the possibility to manage inference emd batch bu use ONLY ONE REDIS KEY !!!
+    for this prototype it is fine because the output emd embedding keep only one image !!!!! 
+    """
     def postprocess(self, outputs: Dict[str, Any], headers: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
         logger.info(f"Predictor output: {outputs}")
         
-        image_key = outputs.get("image_key") or (headers.get("x-image-key") if headers else None) or "unknown-key"
+        image_key = outputs.get("image_key") or (headers.get("x-image-key") if headers else None) or "unknown-key" #the key came from the header
         
         preds = outputs["predictions"]
     
-        event_data = {
-            "predictions": preds,
-            "image_key": image_key
-        }
-        
-        asyncio.run_coroutine_threadsafe(self.event_queue.put(event_data), self.loop)
+        event_data = { "predictions": preds, "image_key": image_key  }
+        #async kafka event 
+        asyncio.run_coroutine_threadsafe( self.event_queue.put(event_data) , self.loop) #kafka have to create an asynch msg for the ood with model emd prediction and redis key
         
         pred = preds[0]
         logger.info(f"POST PROCESS {self.count} per Chiave: {image_key}")
         self.count += 1
-        
-        return {
-            "predicted_class": int(pred["predicted_class"]), 
-            "probabilities": pred["probabilities"], 
-            "embedding": pred["embedding"],
-            "image_key": image_key
-        }
+        #back to the rest api 
+        return {  "predicted_class": int(pred["predicted_class"]),  "probabilities": pred["probabilities"], "embedding": pred["embedding"], "image_key": image_key }
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -125,7 +117,7 @@ if __name__ == "__main__":
     parser.add_argument("--namespace", default="default")
     parser.add_argument("--broker", default="http://kafka-broker-ingress.knative-eventing.svc.cluster.local/default/kafka-broker")
     parser.add_argument("--broker_host", default="kafka-broker-ingress.knative-eventing.svc.cluster.local")
-    parser.add_argument("--ce_type", default="org.kubeflow.serving.inference.request")
+    parser.add_transformersargument("--ce_type", default="org.kubeflow.serving.inference.request")
     args, _ = parser.parse_known_args()
 
     models = [m.strip() for m in args.model_names.split(",") if m.strip()]
@@ -142,5 +134,5 @@ if __name__ == "__main__":
         ) for m in models
     ]
 
-    logger.info(f"Starting transformers={len(transformers)}")
-    ModelServer().start(transformers)
+    logger.info(f"Starting transformers={len(transformers)}") 
+    ModelServer().start(transformers) #get in a list of possibile model-transformer
