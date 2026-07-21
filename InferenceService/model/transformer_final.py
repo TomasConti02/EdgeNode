@@ -28,7 +28,7 @@ class ImageTransformer(Model): #kserve sdk component
         # create an asynch event loop for knative eventing operations 
         self.loop = asyncio.new_event_loop()
         self.event_queue = None
-        #self.semaphore = asyncio.Semaphore(max_concurrent_kafka_tasks)
+        
         threading.Thread(target=self._run_worker, daemon=True).start()
         logger.info(f"Transformer [{name}] predictor={self.predictor_host}")
 
@@ -119,7 +119,7 @@ if __name__ == "__main__":
     parser.add_argument("--namespace", default="default")
     parser.add_argument("--broker", default="http://kafka-broker-ingress.knative-eventing.svc.cluster.local/default/kafka-broker")
     parser.add_argument("--broker_host", default="kafka-broker-ingress.knative-eventing.svc.cluster.local")
-    #parser.add_transformersargument("--ce_type", default="org.kubeflow.serving.inference.request")
+    
     parser.add_argument("--ce_type", default="org.kubeflow.serving.inference.request")
     args, _ = parser.parse_known_args()
 
