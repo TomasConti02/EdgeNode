@@ -13,13 +13,14 @@ spec:
     spec:
       containers:
       - name: image-api
-        image: tomasconti02/rest-interface:v13
+#        image: tomasconti02/rest-interface:v35
+        image: tomasconti02/interface-rest:v10
         ports:
         - containerPort: 5000
         env:
         - name: ISTIO_GATEWAY
-          value: "http://istio-ingressgateway.istio-system.svc.cluster.local"
-        resources:
+          value: "http://istio-ingressgateway.istio-system.svc.cluster.local" #internal cluster istio gataway dns 
+        resources: # resource require and limitation 
           requests:
             memory: "256Mi"
             cpu: "200m"
