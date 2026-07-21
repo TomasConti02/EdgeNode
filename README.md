@@ -11,7 +11,7 @@ main files:
 
 ### Kiali high level view of the system result
 
-![Demo Kiali Inference](sample/stream.gif)
+![Demo Kiali Inference](sample/good.gif)
 
 -------------------------------------------------------------------------
 
