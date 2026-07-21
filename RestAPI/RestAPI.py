@@ -126,10 +126,14 @@ async def predict_batch_encoded(files: List[UploadFile] = File(...), models: str
     return {"predictions": predictions}
 
 """
-curl  -X POST "http://localhost:8080/predict_batch?models=simple-cnn,simple-cnn-test" -H "Host: image-api.default.example.com" -H "Content-Type: application/octet-stream" --data-binary @payload.bin
-{"predictions":[{"model":"simple-cnn","predicted_class":0},{"model":"simple-cnn-test","predicted_class":0}]}
+curl -X POST \
+"http://localhost:8080/predict_batch_encoded?models=simple-cnn,simple-cnn-test" \
+-H "Host: image-api.default.example.com" \
+-H "Content-Type: application/octet-stream" \
+-H "X-Image-Sizes: 674,674" \
+--data-binary @batch.bin
+{"predictions":[{"model":"simple-cnn","predicted_class":2},{"model":"simple-cnn-test","predicted_class":2}]}
 """
-
 @app.post("/predict_batch_encoded") #batch of png images into the body, png compression is require to send each images png compression size into the request header
 async def predict_batch_encoded( request: Request, models: str ):
     body = await request.body()
