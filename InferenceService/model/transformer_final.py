@@ -28,16 +28,18 @@ class ImageTransformer(Model): #kserve sdk component
         # create an asynch event loop for knative eventing operations 
         self.loop = asyncio.new_event_loop()
         self.event_queue = None
+        #self.semaphore = asyncio.Semaphore(max_concurrent_kafka_tasks)
         threading.Thread(target=self._run_worker, daemon=True).start()
         logger.info(f"Transformer [{name}] predictor={self.predictor_host}")
 
     def _run_worker(self):
         asyncio.set_event_loop(self.loop)
-        self.event_queue = asyncio.Queue()
+        self.event_queue = asyncio.Queue(maxsize=5000)
         self.loop.run_until_complete(self.event_worker())
 
     async def event_worker(self):
-        async with aiohttp.ClientSession() as session:
+        connector = aiohttp.TCPConnector(limit=200)
+        async with aiohttp.ClientSession(connector=connector) as session:
             while True:
                 event_data = await self.event_queue.get()
                 asyncio.create_task(self._send_batch(session, event_data))
@@ -73,18 +75,18 @@ class ImageTransformer(Model): #kserve sdk component
         logger.info("RAW IMAGE RECEIVED bytes=%d", len(payload))
         
         headers = headers or {}
-        image_key = headers.get("x-image-key") or headers.get("X-Image-Key") or "unknown-key"
+        image_key = headers.get("x-image-key") or headers.get("X-Image-Key") or "unknown-key" #take the redis image key for linking the system 
         logger.info(f"Preprocess received X-Image-Key: {image_key}")
 
         content_type = headers.get("content-type", "").lower()
 
         if content_type == "application/octet-stream": #raw images 
-            img_tensor = tf.io.decode_raw(payload, tf.uint8)
+            img_tensor = tf.io.decode_raw(payload, tf.uint8) #baypass the decompression of png and create the inference input 
             img_tensor = tf.reshape(img_tensor, [224, 224, 3])
         else: # png image
             img_tensor = tf.io.decode_image(payload, channels=3, expand_animations=False)
 
-        img_tensor = tf.expand_dims(img_tensor, axis=0)
+        img_tensor = tf.expand_dims(img_tensor, axis=0) #add batch dim -> [224, 224, 3] to [1, 224, 224, 3] so it matches standard batched model input signatures
         img_tensor = tf.image.rgb_to_grayscale(img_tensor)#mock
         img_tensor = tf.image.resize(img_tensor, [28, 28]) #mock
         img_tensor = tf.cast(img_tensor, tf.float32) / 255.0 #if the model input activation change i have also to change this 
@@ -117,7 +119,8 @@ if __name__ == "__main__":
     parser.add_argument("--namespace", default="default")
     parser.add_argument("--broker", default="http://kafka-broker-ingress.knative-eventing.svc.cluster.local/default/kafka-broker")
     parser.add_argument("--broker_host", default="kafka-broker-ingress.knative-eventing.svc.cluster.local")
-    parser.add_transformersargument("--ce_type", default="org.kubeflow.serving.inference.request")
+    #parser.add_transformersargument("--ce_type", default="org.kubeflow.serving.inference.request")
+    parser.add_argument("--ce_type", default="org.kubeflow.serving.inference.request")
     args, _ = parser.parse_known_args()
 
     models = [m.strip() for m in args.model_names.split(",") if m.strip()]
