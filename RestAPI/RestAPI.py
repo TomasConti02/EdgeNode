@@ -18,11 +18,11 @@ httpx_client: httpx.AsyncClient = None  #asynch http communciation
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global httpx_client
-    httpx_client = httpx.AsyncClient(timeout=30.0) #create the tcp/http connection poooling
+    limits = httpx.Limits(max_keepalive_connections=100, max_connections=500)
+    httpx_client = httpx.AsyncClient(limits=limits, timeout=30.0) #create the tcp/http connection poooling
     logger.info("HTTP client ready")
     yield
     await httpx_client.aclose() #clean up the network resource 
-
 app = FastAPI(lifespan=lifespan)
 ##########################################################################################################################################
 async def forward(img: bytes, model: str, content_type: str, image_key: str): #take the images raw ( enocded or not ) and by istio send the images to the inferense service 
@@ -124,7 +124,6 @@ async def predict_batch_encoded(files: List[UploadFile] = File(...), models: str
     for img, file, model, key in zip(images, files, model_list, image_keys):
         asyncio.create_task( store_image_to_detector(img, file.filename, file.content_type or "image/png", model, key) )
     return {"predictions": predictions}
-
 """
 curl -X POST \
 "http://localhost:8080/predict_batch_encoded?models=simple-cnn,simple-cnn-test" \
@@ -203,9 +202,7 @@ async def predict_batch(request: Request, models: str): #batch of raw images int
     for img, model, key in zip(images, model_list, image_keys): 
         asyncio.create_task( store_image_to_detector(img, "image.bin", "application/octet-stream", model, key) )
     return {"predictions": predictions}
-
 ##########################################################################################################################################
-
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
