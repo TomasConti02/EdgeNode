@@ -106,12 +106,53 @@ Kind does not provide a cloud-native LoadBalancer. To bypass the <pending> statu
  ```bash
 kubectl port-forward --namespace istio-system svc/istio-ingressgateway 8080:80
 ```
-
 --------------------------------------------------------------------------------
-### Fast deploy
+### Knative Eventing with Kafka Deployment
 
-There is a fast deployment script for the inference cluster on kserve.
-into cont.json there is the cluster configuration used by the deployment script. 
+The Knative configuration consists of a 3-node Strimzi Kafka cluster using the KRaft protocol. A Knative Broker configures the Kafka cluster as the primary event-driven message hub for Knative Eventing.
+
+> Note: If the Kubernetes cluster is hosted remotely (i.e., not a local kind cluster), make sure the Kubernetes configuration file (kubeconfig) points to the correct cluster location.
+
+
+```bash
+cd Knative_Eventing
+
+python3 deployv1.py
+
+kubectl get pods -n kafka
+NAME                                         READY   STATUS    RESTARTS   AGE
+my-cluster-dual-role-0                       1/1     Running   0          4m54s
+my-cluster-dual-role-1                       1/1     Running   0          4m54s
+my-cluster-dual-role-2                       1/1     Running   0          4m54s
+my-cluster-entity-operator-b55dd54f4-fs697   2/2     Running   0          3m59s
+strimzi-cluster-operator-798fbc76f7-9qj69    1/1     Running   0          5m51s
+```
+--------------------------------------------------------------------------------
+## REST API interface deployment
+Deployment of the stateless rest api interface for edge node access
+```bash
+cd RestAPI
+
+kubectl apply -f service.yaml 
+
+kubectl get pods
+NAME                                          READY   STATUS    RESTARTS   AGE
+image-api-00001-deployment-74f4b4ff8b-ltrl9   2/2     Running   0          28s
+
+kubectl get ksvc
+NAME        URL                                    LATESTCREATED     LATESTREADY       READY   REASON
+image-api   http://image-api.default.example.com   image-api-00001   image-api-00001   True
+```
+-----------------------------------------------------------------------------------------
+### Inference fast deployment
+
+A fast deployment script is available for setting up the inference cluster on KServe.
+ The cluster configuration used by the deployment script can be found in cont.json.
+
+The inference model weights are stored locally in a PV-PVC.
+For production readiness, the inference service endpoint should be configured to point to the company's Kubeflow registry.
+
+> Note: If the Kubernetes cluster is hosted remotely (i.e., not a local kind cluster), make sure the Kubernetes configuration file (kubeconfig) points to the correct cluster location.
 
 ```bash
 cd ./Deployment
@@ -134,83 +175,182 @@ python3 deploy-multi.py  --deploy
 Check the cluster state:
 ```bash
 kubectl get pods
-NAME                                                            READY   STATUS    RESTARTS   AGE
-simple-cnn-predictor-00001-deployment-556cb9c54f-dsfkm          2/2     Running   0          5m1s
-simple-cnn-test-predictor-00001-deployment-6b74788d97-cbr6k     2/2     Running   0          4m56s
-simple-cnn-test-transformer-00001-deployment-85c874dc69-nhgwx   2/2     Running   0          4m56s
-simple-cnn-transformer-00001-deployment-6c7df5f947-cjjgx        2/2     Running   0          5m1s
+NAME                                                           READY   STATUS    RESTARTS   AGE
+image-api-00001-deployment-74f4b4ff8b-ltrl9                    2/2     Running   0          5m58s
+simple-cnn-predictor-00001-deployment-6b5b78dc4f-lgfnl         2/2     Running   0          84s
+simple-cnn-test-predictor-00001-deployment-7c68b6d7d5-znmqt    2/2     Running   0          79s
+simple-cnn-test-transformer-00001-deployment-57f67cd8d-52jll   2/2     Running   0          78s
+simple-cnn-transformer-00001-deployment-84f75cdcdc-kwstb       2/2     Running   0 
 ```
 Check the kserve knative inference services avalilability:
 ```bash
 kubectl get ksvc
 NAME                          URL                                                      LATESTCREATED                       LATESTREADY                         READY   REASON
+image-api                     http://image-api.default.example.com                     image-api-00001                     image-api-00001                     True    
 simple-cnn-predictor          http://simple-cnn-predictor.default.example.com          simple-cnn-predictor-00001          simple-cnn-predictor-00001          True    
 simple-cnn-test-predictor     http://simple-cnn-test-predictor.default.example.com     simple-cnn-test-predictor-00001     simple-cnn-test-predictor-00001     True    
 simple-cnn-test-transformer   http://simple-cnn-test-transformer.default.example.com   simple-cnn-test-transformer-00001   simple-cnn-test-transformer-00001   True    
-simple-cnn-transformer        http://simple-cnn-transformer.default.example.com        simple-cnn-transformer-00001        simple-cnn-transformer-00001        True    
+simple-cnn-transformer        http://simple-cnn-transformer.default.example.com        simple-cnn-transformer-00001        simple-cnn-transformer-00001        True  
+```
+There are two container into each Pods beacuse one is the Service Mesh proxy sidecar.
+-----------------------------------------------------------------------------------------
+## OOD detector deployment
+Deployment of a statefull ood microservice for each inference model
+apply the knative local pod volume path:
+```bash
+kubectl patch configmap config-features \
+  -n knative-serving \
+  --type merge \
+  -p '{
+    "data": {
+      "kubernetes.podspec-persistent-volume-claim": "enabled",
+      "kubernetes.podspec-persistent-volume-write": "enabled",
+      "kubernetes.podspec-fieldref": "enabled"
+    }
+  }'
 ```
 
+start the deployment of each components
+
+```bash
+cd Drift
+kubectl apply -f simple_model_OOD.yaml
+kubectl apply -f simple_model_test_OOD.yaml
+
+kubectl get pods
+NAME                                                             READY   STATUS    RESTARTS   AGE
+image-api-00001-deployment-74f4b4ff8b-ltrl9                      2/2     Running   0          11m
+ood-detector-simple-cnn-00001-deployment-d4b854cb-trb4c          3/3     Running   0          77s
+ood-detector-simple-cnn-test-00001-deployment-7bdd5c74f9-j7zd5   3/3     Running   0          10s
+simple-cnn-predictor-00001-deployment-6b5b78dc4f-lgfnl           2/2     Running   0          7m5s
+simple-cnn-test-predictor-00001-deployment-7c68b6d7d5-znmqt      2/2     Running   0          7m
+simple-cnn-test-transformer-00001-deployment-57f67cd8d-52jll     2/2     Running   0          6m59s
+simple-cnn-transformer-00001-deployment-84f75cdcdc-kwstb         2/2     Running   0          7m5s
+
+kubectl get ksvc
+NAME                           URL                                                       LATESTCREATED                        LATESTREADY                          READY   REASON
+image-api                      http://image-api.default.example.com                      image-api-00001                      image-api-00001                      True    
+ood-detector-simple-cnn        http://ood-detector-simple-cnn.default.example.com        ood-detector-simple-cnn-00001        ood-detector-simple-cnn-00001        True    
+ood-detector-simple-cnn-test   http://ood-detector-simple-cnn-test.default.example.com   ood-detector-simple-cnn-test-00001   ood-detector-simple-cnn-test-00001   True    
+simple-cnn-predictor           http://simple-cnn-predictor.default.example.com           simple-cnn-predictor-00001           simple-cnn-predictor-00001           True    
+simple-cnn-test-predictor      http://simple-cnn-test-predictor.default.example.com      simple-cnn-test-predictor-00001      simple-cnn-test-predictor-00001      True    
+simple-cnn-test-transformer    http://simple-cnn-test-transformer.default.example.com    simple-cnn-test-transformer-00001    simple-cnn-test-transformer-00001    True    
+simple-cnn-transformer         http://simple-cnn-transformer.default.example.com         simple-cnn-transformer-00001         simple-cnn-transformer-00001         True    
+
+```
+Three container for the OOD detection Pods because has been added a Redis in memory store for blob images.
+----------------------------------------------------------------------------------------
+## PVC state
+By default, kind uses the host's local storage via Rancher's Local Path Provisioner. Because this relies on local directories, it comes with limitations—such as a lack of cross-node volume replication, snapshots, or dynamic scaling.  To enable distributed block storage, enterprise features, and multi-node replication, an open-source storage provider like Longhorn can be deployed
+
+```bash
+kubectl get storageclass
+NAME                 PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+standard (default)   rancher.io/local-path   Delete          WaitForFirstConsumer   false                  31m
+```
+
+```bash
+kubectl get pvc
+NAME                            STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+ood-queue-pvc-simple-cnn        Bound    pvc-527b491d-4b7b-43f5-a03b-9a0530398461   1Gi        RWO            standard       <unset>                 4m40s
+ood-queue-pvc-simple-cnn-test   Bound    pvc-27da7c9e-d363-460d-9ae0-43d32df116eb   1Gi        RWO            standard       <unset>                 3m22s
+redis-pvc-simple-cnn            Bound    pvc-556b62a2-2a90-46bc-82ca-cfa968f4e37a   1Gi        RWO            standard       <unset>                 4m40s
+redis-pvc-simple-cnn-test       Bound    pvc-51104cd8-06d5-43bb-b773-83935eacab3c   1Gi        RWO            standard       <unset>                 3m22s
+simple-cnn-pvc                  Bound    pvc-4d4dcab1-9659-42a0-b7b5-c9c602b4910e   100Mi      RWO            standard       <unset>                 10m
+simple-cnn-test-pvc             Bound    pvc-7d7e920e-87d5-4d47-b0ad-e996dae7dd2f   200Mi      RWO            standard       <unset>                 10m
+kubectl get pv
+NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM                                   STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
+pvc-27da7c9e-d363-460d-9ae0-43d32df116eb   1Gi        RWO            Delete           Bound    default/ood-queue-pvc-simple-cnn-test   standard       <unset>                          7m35s
+pvc-4c1cb9dc-ff54-4f0c-be92-159912c92ee9   10Gi       RWO            Delete           Bound    kafka/data-0-my-cluster-dual-role-0     standard       <unset>                          27m
+pvc-4d4dcab1-9659-42a0-b7b5-c9c602b4910e   100Mi      RWO            Delete           Bound    default/simple-cnn-pvc                  standard       <unset>                          14m
+pvc-51104cd8-06d5-43bb-b773-83935eacab3c   1Gi        RWO            Delete           Bound    default/redis-pvc-simple-cnn-test       standard       <unset>                          7m35s
+pvc-527b491d-4b7b-43f5-a03b-9a0530398461   1Gi        RWO            Delete           Bound    default/ood-queue-pvc-simple-cnn        standard       <unset>                          8m41s
+pvc-53e52fe0-9727-456c-acd7-cd52285fb748   10Gi       RWO            Delete           Bound    kafka/data-0-my-cluster-dual-role-1     standard       <unset>                          27m
+pvc-556b62a2-2a90-46bc-82ca-cfa968f4e37a   1Gi        RWO            Delete           Bound    default/redis-pvc-simple-cnn            standard       <unset>                          8m41s
+pvc-7d7e920e-87d5-4d47-b0ad-e996dae7dd2f   200Mi      RWO            Delete           Bound    default/simple-cnn-test-pvc             standard       <unset>                          14m
+pvc-e2bf7e4c-fe3e-45a8-b596-ea59ceab3798   10Gi       RWO            Delete           Bound    kafka/data-0-my-cluster-dual-role-2     standard       <unset>                          27m
+```
+
+-----------------------------------------------------------------------------------------
 ## Inference Service Test
+Because Kind do not have a load balancer I can access to cluster by the local host after a port forwarding through the istio gataway Pod.
+The inference pass trough the RestAPI interface level 
 
-Use 'localhost:8080' because the tunnel bridges the local interface to  the cluster network beacuse the port-forwarding.
 ```bash
-curl -X POST http://localhost:8080/v1/models/simple-cnn-test:predict \ 
-     -H "Host: simple-cnn-test.default.example.com" \
-     -H "Content-Type: application/json" \
-     -d @image.json
-{
-"predicted_class":0,
-"probabilities"[0.109329447,0.0996421501,...,0.0744211152],
-"embedding":[0.0178625677,0.132521331,..,0.0090905251,0.184597969]
-}
+cd /InferenceService/model_testing
+
+curl -X POST \
+"http://localhost:8080/predict_encoded?model=simple-cnn-test" \
+-H "Host: image-api.default.example.com" \
+-H "Content-Type: image/png" \
+--data-binary @immagine.png
+
+{"predicted_class":2}
+
+curl -X POST "http://localhost:8080/predict_encoded?model=simple-cnn" \
+-H "Host: image-api.default.example.com" \ 
+-H "Content-Type: image/png" \
+ --data-binary @immagine.png
+
+{"predicted_class":2}
+-------------------------------------------------------------------------------------------------
+curl  -X POST \
+"http://localhost:8080/predict_encoded_multipart" \
+-H "Host: image-api.default.example.com" \
+-F "image=@immagine.png" \
+-F "model=simple-cnn"
+
+{"predicted_class":2}
+
+curl  -X POST "http://localhost:8080/predict_encoded_multipart" \
+-H "Host: image-api.default.example.com" \
+-F "image=@immagine.png" \
+-F "model=simple-cnn-test"
+
+{"predicted_class":2}
+-------------------------------------------------------------------------------------------------
+curl -X POST "http://localhost:8080/predict_batch_encoded_multipart" \
+-H "Host: image-api.default.example.com" \
+-F "files=@immagine.png" \
+-F "files=@immagine.png" \
+-F "models=simple-cnn,simple-cnn-test"-cnn,simple-cnn-test"
+
+{"predictions":[{"model":"simple-cnn","predicted_class":2},{"model":"simple-cnn-test","predicted_class":2}]}
+-------------------------------------------------------------------------------------------------
+curl -X POST \
+"http://localhost:8080/predict_batch_encoded?models=simple-cnn,simple-cnn-test" \
+-H "Host: image-api.default.example.com" \
+-H "Content-Type: application/octet-stream" \
+-H "X-Image-Sizes: 674,674" \
+--data-binary @batch.bin
+
+{"predictions":[{"model":"simple-cnn","predicted_class":2},{"model":"simple-cnn-test","predicted_class":2}]}
+-------------------------------------------------------------------------------------------------
+curl -X POST \
+"http://localhost:8080/predict?model=simple-cnn" \
+-H "Host: image-api.default.example.com" \
+-H "Content-Type: application/octet-stream" \
+--data-binary @image.raw
+
+{"predicted_class":0}
+
+curl -X POST "http://localhost:8080/predict?model=simple-cnn-test" \
+-H "Host: image-api.default.example.com" \
+-H "Content-Type: application/octet-stream" \
+--data-binary @image.raw
+
+{"predicted_class":0}
+-------------------------------------------------------------------------------------------------
+
+curl -X POST \
+"http://localhost:8080/predict_batch?models=simple-cnn,simple-cnn-test" \
+-H "Host: image-api.default.example.com" \
+-H "Content-Type: application/octet-stream" \
+--data-binary @payload.bin
+
+{"predictions":[{"model":"simple-cnn","predicted_class":0},{"model":"simple-cnn-test","predicted_class":0}]}
+
 ```
-Test both the models
-```bash
-curl -X POST http://localhost:8080/v1/models/simple-cnn:predict \dict \
-     -H "Host: simple-cnn.default.example.com" \
-     -H "Content-Type: application/json" \
-     -d @image.json
-{
-"predicted_class":0,
-"probabilities":[0.109329447,0.0996421501..2,0.102014825,0.0744211152],
-"embedding":[0.0178625677,..,0.184597969]
-}
-```
-Delate the inference cluster:
-```bash
-python3 deploy-multi.py --delete
-==> Starting cleanup in namespace: 'default'
-
---- Cleaning resources for: simple-cnn ---
-  [DELETED] InferenceService
-  [DELETED] PVC
-
---- Cleaning resources for: simple-cnn-test ---
-  [DELETED] InferenceService
-  [DELETED] PVC
-```
-## Workflow 
-
-1. **Client** → POST to the istio gataway `http://localhost:8080/v1/models/<model>:predict`  
-   Header `Host: <model>.<namespace>.example.com` allow Istio the detect the target
-  > - `localhost:8080` → the Istio ingress gateway is exposed locally via `kubectl port-forward` for testing.  
-  > - `/v1/models/<model>:predict` → the standard KServe prediction endpoint, where `<model>` is the name of the InferenceService.  
-  > - The gateway internally routes the request to the correct transformer/predictor based on the `Host` header.
-
-3. **Istio Ingress Gateway** routes request to the **Transformer**  
-   `{model}-transformer.{namespace}.svc.cluster.local`
-
-4. **Transformer** preprocesses:  
-   decode base64 → grayscale → resize 28×28 → normalize
-
-5. **Transformer** calls **Predictor** internally  
-   `{model}-predictor.{namespace}.svc.cluster.local:8080`
-
-6. **Predictor** runs inference → returns raw predictions
-
-7. **Transformer** postprocesses: extracts `predicted_class`, `probabilities`, `embedding`
-
-8. **Gateway** returns final JSON response to client
 
 ### Kiali 
 execute the Observer:
