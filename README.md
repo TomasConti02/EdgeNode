@@ -352,6 +352,66 @@ curl -X POST \
 
 ```
 
+Check the system log to verify the operability:
+```bash
+kubectl logs <<<<<<<<<  image-api -pod name >>>>>>>>>>>>>
+
+INFO:httpx:HTTP Request: POST http://istio-ingressgateway.istio-system.svc.cluster.local/v1/models/simple-cnn-test:predict "HTTP/1.1 200 OK"
+INFO:RestAPI:simple-cnn-test -> 200 (Redis Key: b433a215-009e-4aee-b6b2-929e3c65b7e8)
+
+INFO:httpx:HTTP Request: POST http://istio-ingressgateway.istio-system.svc.cluster.local/v1/models/simple-cnn:predict "HTTP/1.1 200 OK"
+INFO:RestAPI:simple-cnn -> 200 (Redis Key: 96c53191-ad6d-42f1-9fe6-d6109728b684)
+
+INFO:     10.244.1.7:0 - "POST /predict_batch_encoded?models=simple-cnn,simple-cnn-test HTTP/1.1" 200 OK
+
+INFO:httpx:HTTP Request: POST http://istio-ingressgateway.istio-system.svc.cluster.local/store_image "HTTP/1.1 200 OK"
+INFO:RestAPI:OK image has been saved with Redis key: b433a215-009e-4aee-b6b2-929e3c65b7e8
+
+INFO:httpx:HTTP Request: POST http://istio-ingressgateway.istio-system.svc.cluster.local/store_image "HTTP/1.1 200 OK"
+INFO:RestAPI:OK image has been saved with Redis key: 96c53191-ad6d-42f1-9fe6-d6109728b684
+
+
+kubectl logs <<<<<<<<<<<< simple-cnn-transformer >>>>>>>>>>>>>>>
+
+INFO:__main__:RAW IMAGE RECEIVED bytes=674
+INFO:__main__:Preprocess received X-Image-Key: 96c53191-ad6d-42f1-9fe6-d6109728b684                     
+INFO:__main__:Predictor output: {'predictions': [{'embedding': [0.00376976, .....
+kub 0.103051201, 0.100030981, 0.0865775868]}]}
+INFO:__main__:POST PROCESS 40 per Chiave: 96c53191-ad6d-42f1-9fe6-d6109728b684
+2026-07-22 11:48:14.262 kserve.trace requestId: 6f962001-797a-45cb-9905-e948fd6df6dc, preprocess_ms: 8.805990219, explain_ms: 0, predict_ms: 43.231010437, postprocess_ms: 0.738620758
+2026-07-22 11:48:14.263 uvicorn.access INFO:     10.244.1.7:0 1 - "POST /v1/models/simple-cnn%3Apredict HTTP/1.1" 200 OK
+2026-07-22 11:48:14.264 kserve.trace kserve.io.kserve.protocol.rest.v1_endpoints.predict: 0.05603528022766113
+2026-07-22 11:48:14.264 kserve.trace kserve.io.kserve.protocol.rest.v1_endpoints.predict: 0.022173999999999694
+INFO:__main__:Kafka event sent for Key: 96c53191-ad6d-42f1-9fe6-d6109728b684 | batch=1
+
+
+
+kubectl logs <<<<<< ood-detector-pod name >>>>>>
+
+INFO:ood-detector:Image saved in redis with key value: image:96c53191-ad6d-42f1-9fe6-d6109728b684
+INFO:     10.244.1.7:0 - "POST /store_image HTTP/1.1" 200 OK
+
+INFO:ood-detector:Enqueued ef6a6241-ce29-430b-91a6-ba9562cd7603 | Key: 96c53191-ad6d-42f1-9fe6-d6109728b684 (1) queue=1
+INFO:     10.244.1.7:0 - "POST / HTTP/1.1" 204 No Content
+
+INFO:ood-detector:Processing 1 elements from event ef6a6241-ce29-430b-91a6-ba9562cd7603 (Image Key: 96c53191-ad6d-42f1-9fe6-d6109728b684)
+WARNING:ood-detector:OOD detected with redis key -> 96c53191-ad6d-42f1-9fe6-d6109728b684
+INFO:ood-detector:Retrieved OOD image blob (674 bytes) for key image:96c53191-ad6d-42f1-9fe6-d6109728b684
+INFO:ood-detector:Retrieved OOD metadata: {b'filename': b'image.png', b'content_type': b'image/png', b'timestamp': b'2026-07-22T11:48:14.290906+00:00', b'ttl': b'600', b'metadata': b'simple-cnn', b'resolved_key': b'image:96c53191-ad6d-42f1-9fe6-d6109728b684'}
+INFO:ood-detector:TTL extended to 86400s for key: image:96c53191-ad6d-42f1-9fe6-d6109728b684
+INFO:ood-detector:Finished processing event ef6a6241-ce29-430b-91a6-ba9562cd7603
+```
+test the helth check end point:
+```bash
+curl -H "Host: ood-detector-simple-cnn-test.default.example.com" http://localhost:8080/health
+
+{"status":"ok","queue_size":0,"threshold":0.2,"processed_counter":1,"ood_buffer_size":0,"redis_success_ops":1,"redis_errors":0,"redis_ttl_update":1}(env)
+
+curl -H "Host: ood-detector-simple-cnn.default.example.com" http://localhost:8080/health
+
+{"status":"ok","queue_size":0,"threshold":0.2,"processed_counter":1,"ood_buffer_size":0,"redis_success_ops":1,"redis_errors":0,"redis_ttl_update":1}(env)
+```
+-------------------------------------------------------
 ### Kiali 
 execute the Observer:
 ```bash
