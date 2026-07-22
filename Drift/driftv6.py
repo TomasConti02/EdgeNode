@@ -133,13 +133,8 @@ class RealTimeOODDetector:
         return dist, is_ood, self.th
 
     def get_state(self) -> dict: #get the ood state before the snapshot 
-        return {
-            k: getattr(self, k) for k in (
-                "knn", "cent", "inv_cov", "dist_buf", "batch_cnt", "th", "safe_th", 
-                "batch_sz", "smooth", "min_s", "perc", "max_perc", "max_drop", "max_up",
-                "drop_cnt", "up_cnt", "med_win", "batch_percs", "smooth_safe", "th_flow", "cnt"
-            )
-        }
+        return { k: getattr(self, k) for k in ( "knn", "cent", "inv_cov", "dist_buf", "batch_cnt", "th", "safe_th",  "batch_sz", "smooth", "min_s", "perc", "max_perc", "max_drop", "max_up",
+                "drop_cnt", "up_cnt", "med_win", "batch_percs", "smooth_safe", "th_flow", "cnt") }
 
     def set_state(self, st: dict) -> None: #upload the snapshot state
         for k, v in st.items():
@@ -279,10 +274,12 @@ async def forward_ood_batch():
 
     # network call the possibile data lake end point 
     try:
+        """
         async with httpx.AsyncClient(timeout=0.0) as client:
             res = await client.post(OOD_FORWARD_ENDPOINT, json={"batch": payload_batch})
             res.raise_for_status()
             log.info(f"Successfully forwarded batch of {len(payload_batch)} OOD samples to {OOD_FORWARD_ENDPOINT}")
+        """
     except Exception as e:
         log.error(f"Failed to forward OOD batch to endpoint {OOD_FORWARD_ENDPOINT}: {e}. Cleaning up Redis anyway.")
     finally:
@@ -332,8 +329,9 @@ async def worker_loop():
                             async with redis_client.pipeline(transaction=True) as pipe: # very fast O(1) transaction for the system clean up because redis is a in memory key value store
                                 pipe.expire(img_redis_key, REDIS_OOD_EXTENDED_TTL)
                                 pipe.expire(meta_redis_key, REDIS_OOD_EXTENDED_TTL)
+                                pipe.incr("metrics:redis_success_ttl") # the system  find out the ood image redis key coming from kafka and increare the entry ttl
                                 await pipe.execute()
-
+                                
                             log.info(f"TTL extended to {REDIS_OOD_EXTENDED_TTL}s for key: {img_redis_key}")
 
                             ood_buffer.append({ "image_key": image_key, "img_redis_key": img_redis_key, #add ood into the memory buffer
@@ -343,9 +341,8 @@ async def worker_loop():
                             if len(ood_buffer) >= OOD_FORWARD_BATCH_SIZE: #memory limits of the batch has been reach 
                                 log.info(f"OOD buffer limit reached ({len(ood_buffer)}/{OOD_FORWARD_BATCH_SIZE}). Triggering forwarder.")
                                 await forward_ood_batch() #redcue the data lake  network call of a batch factor
-
                         except Exception as redis_err:
-                            log.error(f"ERROR reading/updating Redis for key {image_key}: {redis_err}")
+                            log.error(f"~~~~~  ~~~~ ~~~~~~  ~~~~ ERROR reading/updating Redis for key {image_key}: {redis_err}")
 
                     else: #no odd, eliminate the item and clean up the system
                         log.info(f"In-Distribution sample detected. Deleting Redis key: {img_redis_key}")
@@ -356,7 +353,7 @@ async def worker_loop():
                                 await pipe.execute()
                             log.info(f"Successfully deleted {img_redis_key} and {meta_redis_key} from Redis.")
                         except Exception as redis_err:
-                            log.error(f"ERROR deleting Redis keys for {image_key}: {redis_err}")
+                            log.error(f"~~~~~  ~~~~ ~~~~~~  ~~~~ ERROR deleting Redis keys for {image_key}: {redis_err}")
             queue.task_done()
             log.info(f"Finished processing event {eid}")
     except asyncio.CancelledError:
@@ -367,7 +364,25 @@ async def worker_loop():
                 queue.task_done()
             except asyncio.QueueEmpty:
                 break
-
+##################################################################################################################################
+async def increment_redis_error():
+    if redis_client:
+        try:
+            await redis_client.incr("metrics:redis_errors") #incr increment
+        except Exception:
+            pass
+async def increment_redis_success():
+    if redis_client:
+        try:
+            await redis_client.incr("metrics:redis_success_ops")
+        except Exception:
+            pass
+async def increment_redis_ttl():
+    if redis_client:
+        try:
+            await redis_client.incr("metrics:redis_success_ttl")
+        except Exception:
+            pass
 ##################################################################################################################################
 @asynccontextmanager
 async def lifespan(app: FastAPI):# manager of the rest api lifecyle
@@ -428,9 +443,29 @@ async def receive(req: Request):
 
 @app.get("/health")
 async def health():
-    if detector is None:
-        return {"status": "not_ready", "queue_size": queue.qsize()}
-    return { "status": "ok",  "queue_size": queue.qsize(),  "threshold": detector.th, "processed_counter": detector.cnt, "ood_buffer_size": len(ood_buffer) }
+    redis_errors = 0
+    redis_success = 0
+    if redis_client:
+        try:
+            err_val = await redis_client.get("metrics:redis_errors")
+            succ_val = await redis_client.get("metrics:redis_success_ops")
+            succ_tt_val = await redis_client.get("metrics:redis_success_ttl")
+            redis_errors = int(err_val) if err_val else 0
+            redis_success = int(succ_val) if succ_val else 0
+            redis_success_ttl = int(succ_tt_val) if succ_tt_val else 0
+        except Exception:
+            pass
+
+    return { 
+        "status": "ok" if detector else "not_ready",  
+        "queue_size": queue.qsize(),  
+        "threshold": detector.th if detector else None, 
+        "processed_counter": detector.cnt if detector else 0, 
+        "ood_buffer_size": len(ood_buffer),
+        "redis_success_ops": redis_success,
+        "redis_errors": redis_errors,
+        "redis_ttl_update": redis_success_ttl
+    }
 
 @app.post("/store_image") #this endpoint receive the images raw/png by the rest api, all the metadata are into the header of the http call
 async def store_image( request: Request, content_type: Optional[str] = Header(None, alias="Content-Type"),  x_filename: Optional[str] = Header(None, alias="X-Filename"),
@@ -454,9 +489,17 @@ async def store_image( request: Request, content_type: Optional[str] = Header(No
 
     meta = { "filename": x_filename or "unknown", "content_type": content_type or "application/octet-stream", "timestamp": datetime.datetime.now(timezone.utc).isoformat(),
         "ttl": ttl,  "metadata": x_metadata or "", "resolved_key": key, }
-
-    await redis_client.hset(meta_key, mapping=meta) #set the metadata dictionary into redis and the ttl
-    await redis_client.expire(meta_key, ttl)
+    try:
+        async with redis_client.pipeline(transaction=True) as pipe: #redis in memroy transactions
+            pipe.setex(key, ttl, img_bytes)
+            pipe.hset(meta_key, mapping=meta)
+            pipe.expire(meta_key, ttl)
+            pipe.incr("metrics:redis_success_ops")
+            await pipe.execute()
+    except Exception as e:
+        await increment_redis_error()
+        log.error(f"Failed to store image in Redis: {e}")
+        raise HTTPException(500, "Failed to store image in Redis")
 
     log.info("Image saved in redis with key value: %s", key)
     return {"image_id": x_image_key, "ttl": ttl, "redis_key": key}

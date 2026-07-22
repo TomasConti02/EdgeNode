@@ -13,9 +13,17 @@ spec:
     spec:
       containerConcurrency: 100
       containers:
-        - image: docker.io/tomasconti02/ood-detector:v12
+        - name: ood-detector
+          image: docker.io/tomasconti02/ood-detector:v19
           ports:
             - containerPort: 8080
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
           volumeMounts:
             - name: fallback-storage
               mountPath: /data/queue
@@ -65,12 +73,21 @@ spec:
               value: "http://cloud_ood_storing_service/process_ood_batch"
             - name: OOD_FORWARD_BATCH_SIZE
               value: "5"
-        - image: redis:7-alpine
-          name: redis
+
+        - name: redis
+          image: redis:7-alpine
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
           volumeMounts:
             - name: redis-storage
               mountPath: /data
               readOnly: false
+
       volumes:
         - name: redis-storage
           persistentVolumeClaim:
