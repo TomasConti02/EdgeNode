@@ -7,7 +7,7 @@ metadata:
 spec:
   template:
     metadata:
-      annotations:
+      annotations: #knative service lifecycle scaling property
         autoscaling.knative.dev/minScale: "1"
         autoscaling.knative.dev/maxScale: "10"
     spec:
@@ -20,7 +20,7 @@ spec:
         env:
         - name: ISTIO_GATEWAY
           value: "http://istio-ingressgateway.istio-system.svc.cluster.local" #internal cluster istio gataway dns 
-        resources: # resource require and limitation 
+        resources: # resource require and limitation avoit that the pod container use all the system resources 
           requests:
             memory: "256Mi"
             cpu: "200m"

@@ -18,6 +18,7 @@ httpx_client: httpx.AsyncClient = None  #asynch http communciation
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global httpx_client
+    #storage_semaphore = asyncio.Semaphore(MAX_BACKGROUND_TASKS)
     limits = httpx.Limits(max_keepalive_connections=100, max_connections=500)
     httpx_client = httpx.AsyncClient(limits=limits, timeout=30.0) #create the tcp/http connection poooling
     logger.info("HTTP client ready")
