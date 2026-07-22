@@ -31,7 +31,7 @@ STATE_KEY = "detector_state"
 FALLBACK_FILE = "/data/queue/detector_state.pkl" #state snapshot
 redis_client: Optional[redis.Redis] = None
 ood_buffer = [] #track the ood batch
-############################################################################################################################################################################################
+##############################################################  DEVELOPED OOD DRIFT DETECTOR CLASS ###############################################################################################
 class RealTimeOODDetector:
     def __init__( self,  cent: np.ndarray,  inv_cov: np.ndarray,  win_sz: int,  batch_sz: int,  init_th: Optional[float] = None,  smooth: float = 0.9,  min_s: int = 50,  perc: float = 90.0, 
         max_perc: float = 95.0,  safe_th: Optional[float] = None,  max_drop: int = 5,  max_up: int = 5,  med_win: int = 5,  smooth_safe: bool = False ):
@@ -145,7 +145,7 @@ class RealTimeOODDetector:
                 setattr(self, k, v)
 #######################################################################################################################################################
 detector = None
-queue = asyncio.Queue(maxsize=5000)
+queue = asyncio.Queue(maxsize=5000) #security check
 worker = None
 
 def init_detector() -> RealTimeOODDetector:
@@ -390,7 +390,7 @@ async def lifespan(app: FastAPI):# manager of the rest api lifecyle
     redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=False) #set redis client (redis is located as sindcar into the same ood pod)
     log.info(f"Redis client connected to {REDIS_HOST}:{REDIS_PORT}")
     await restore_state() # operation important if the system reboot after a scale to zero
-    worker = asyncio.create_task(worker_loop())
+    worker = asyncio.create_task( worker_loop() ) #start the asynch event loop 
 
     yield # after this marcks start the code executed before the process shutdown (the process receive the scale to zero signal)
 
@@ -400,14 +400,15 @@ async def lifespan(app: FastAPI):# manager of the rest api lifecyle
         await worker
     except asyncio.CancelledError:
         pass
-    # if the system scale to zero, before doing so i have to flash all the iteam into the in memory buffer !!!! 
+    # if the system scale to zero, before doing so i have to flash all the iteam into the redis in memory buffer !!!! 
     if ood_buffer: #flush
         log.info(f"Flushing remaining {len(ood_buffer)} OOD items during shutdown...")
         await forward_ood_batch()
 
     await save_state() #save the state of the drift detector 
+
     try:
-        await redis_client.save()
+        await redis_client.save() #if we execute the flush it is not usefull for the blob images but useful for the metadata log
         log.info("Redis data saved to disk")
     except Exception as e:
         log.warning(f"Redis save failed: {e}")
@@ -421,12 +422,12 @@ app = FastAPI(lifespan=lifespan)
 async def receive(req: Request):
 
     try:
-        ev = await req.json()
+        ev = await req.json() #cloud event msg is encoded into json format
     except Exception:
         raise HTTPException(400, "Invalid JSON")
     
     eid = req.headers.get("Ce-Id", "unknown")
-    image_key = req.headers.get("X-Image-Key") or ev.get("image_key", "unknown-key")
+    image_key = req.headers.get("X-Image-Key") or ev.get("image_key", "unknown-key") #very important infomration because allow to link the system transaction
     insts = ev.get("instances")
 
     if insts is None:
@@ -440,7 +441,7 @@ async def receive(req: Request):
         raise HTTPException(503, "Overloaded")
         
     return Response(status_code=204)
-
+#######################################################################################################################################
 @app.get("/health")
 async def health():
     redis_errors = 0
@@ -477,24 +478,24 @@ async def store_image( request: Request, content_type: Optional[str] = Header(No
     if not x_image_key:
         raise HTTPException(400, "Missing required header: X-Image-Key")
     
-    img_bytes = await request.body()
+    img_bytes = await request.body() #get the images byte into the body
+
     if not img_bytes:
         raise HTTPException(400, "Empty payload body")
-
+    
+    #create the redis key for the image byte blob storing
     key = f"image:{x_image_key}"
     meta_key = f"{key}:meta"
     ttl = x_ttl or REDIS_IMAGE_TTL
-
-    await redis_client.setex(key, ttl, img_bytes) #set the image blob into redis and set a ttl 
-
+    # having the content type of the stored image is very important because allow to forward binary data together with the metadata for re-create the original image
     meta = { "filename": x_filename or "unknown", "content_type": content_type or "application/octet-stream", "timestamp": datetime.datetime.now(timezone.utc).isoformat(),
         "ttl": ttl,  "metadata": x_metadata or "", "resolved_key": key, }
     try:
         async with redis_client.pipeline(transaction=True) as pipe: #redis in memroy transactions
-            pipe.setex(key, ttl, img_bytes)
-            pipe.hset(meta_key, mapping=meta)
-            pipe.expire(meta_key, ttl)
-            pipe.incr("metrics:redis_success_ops")
+            pipe.setex(key, ttl, img_bytes) #set the image blob into redis and set a ttl 
+            pipe.hset(meta_key, mapping=meta) #store metadata as hash set 
+            pipe.expire(meta_key, ttl) #define the same ttl for the image related metadata hash set 
+            pipe.incr("metrics:redis_success_ops") #log the operation 
             await pipe.execute()
     except Exception as e:
         await increment_redis_error()
