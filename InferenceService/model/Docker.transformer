@@ -7,7 +7,6 @@ RUN pip install --no-cache-dir \
     tensorflow-cpu==2.14.0 \
     numpy \
     aiohttp==3.9.5 \
-    Pillow
 
 COPY transformer_final.py /app/transformer.py
 
