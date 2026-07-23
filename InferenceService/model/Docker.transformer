@@ -6,7 +6,8 @@ RUN pip install --no-cache-dir \
     kserve==0.11.0 \
     tensorflow-cpu==2.14.0 \
     numpy \
-    aiohttp==3.9.5   # <-- required for asynchronous HTTP calls
+    aiohttp==3.9.5 \
+    Pillow
 
 COPY transformer_final.py /app/transformer.py
 
@@ -15,3 +16,5 @@ ENV TRANSFORMER_NAME=cnn-transformer
 EXPOSE 8080
 
 ENTRYPOINT ["python", "transformer.py"]
+#docker build -f Docker.transformer -t tomasconti02/cnn-transformer-key:v3 .
+#docker push tomasconti02/cnn-transformer-key:v3
