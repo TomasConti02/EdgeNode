@@ -1,7 +1,9 @@
-## EdgeNode
+# EdgeNode
 
-Edge Node is a Kubernetes-based AI inference platform designed to serve machine learning models into 5G k8s computing environments.
-main files:
+EdgeNode is a Kubernetes-based AI inference platform designed to serve machine learning models within 5G edge computing environments.
+
+### Main Components
+
 - [ RestAPI interface ](RestAPI/RestAPI.py)
   - [ RestAPI interface yaml ](RestAPI/service.yaml)
   - [ RestAPI interface Docker ](RestAPI/Dockerfile)
@@ -42,7 +44,7 @@ Kserve allow to:
 - traffic routing configuration by service mesh, managing rollbacks and version upgrades with various deployment strategies, including canary and blue-green releases
 ---
 
-## Architecture
+### Architecture
 All the project has been executed on top of a Linux distriution as ubuntu 24.04.
 
 EdgeNode has been developed on top of a Kubernetes stack:
@@ -53,7 +55,7 @@ EdgeNode has been developed on top of a Kubernetes stack:
 
 ---
 
-## Prerequisites
+### Prerequisites
 
 Before getting started, make sure you have the following tools installed:
 
@@ -63,7 +65,7 @@ Before getting started, make sure you have the following tools installed:
 
 ---
 
-## Supported Cluster Types
+### Supported Cluster Types
 
 EdgeNode can run on different Kubernetes environments:
 
@@ -75,7 +77,7 @@ A lightweight Kubernetes distribution running on virtual machines managed by a h
 - [k3s](https://docs.k3s.io/quick-start)
 
 --------------------------------------------------------------------------
-## Quick Start
+# Quick Start
 
 ### Create a Kind cluster
 The cluster will be created with:
@@ -110,7 +112,7 @@ Check system:
 kubectl get pods -A
 ```
 
-## Istio Ingress Gateway Tunneling
+### Istio Ingress Gateway Tunneling
 
 Kind does not provide a cloud-native LoadBalancer. To bypass the <pending> status of the Istio gataway SVC create a TCP tunnel. This maps port 8080 on the host machine to port 80 on the Ingress Gateway pod where it is listening.
 
