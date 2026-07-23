@@ -134,7 +134,7 @@ NAME           URL                                                              
 kafka-broker   http://kafka-broker-ingress.knative-eventing.svc.cluster.local/default/kafka-broker   44s   True 
 ```
 --------------------------------------------------------------------------------
-## REST API interface deployment
+### REST API interface deployment
 Deployment of the stateless rest api interface for edge node access
 ```bash
 cd RestAPI
@@ -236,8 +236,11 @@ simple-cnn-test-transformer   http://simple-cnn-test-transformer.default.example
 simple-cnn-transformer        http://simple-cnn-transformer.default.example.com        simple-cnn-transformer-00001        simple-cnn-transformer-00001        True  
 ```
 There are two container into each Pods beacuse one is the Service Mesh proxy sidecar.
+
 -----------------------------------------------------------------------------------------
-## OOD detector deployment
+
+### OOD detector deployment
+
 Deployment of a statefull ood microservice for each inference model
 apply the knative local pod volume path:
 ```bash
@@ -282,8 +285,11 @@ simple-cnn-transformer         http://simple-cnn-transformer.default.example.com
 
 ```
 Three container for the OOD detection Pods because has been added a Redis in memory store for blob images.
+
 ----------------------------------------------------------------------------------------
-## PVC state
+
+### PVC state
+
 By default, kind uses the host's local storage via Rancher's Local Path Provisioner. Because this relies on local directories, it comes with limitations—such as a lack of cross-node volume replication, snapshots, or dynamic scaling.  To enable distributed block storage, enterprise features, and multi-node replication, an open-source storage provider like Longhorn can be deployed
 
 ```bash
@@ -315,7 +321,9 @@ pvc-e2bf7e4c-fe3e-45a8-b596-ea59ceab3798   10Gi       RWO            Delete     
 ```
 
 -----------------------------------------------------------------------------------------
-## Inference Service Test
+
+### Inference Service Test
+
 Because Kind do not have a load balancer I can access to cluster by the local host after a port forwarding through the istio gataway Pod.
 The inference pass trough the RestAPI interface level 
 
@@ -455,7 +463,9 @@ curl -H "Host: ood-detector-simple-cnn.default.example.com" http://localhost:808
 {"status":"ok","queue_size":0,"threshold":0.2,"processed_counter":1,"ood_buffer_size":0,"redis_success_ops":1,"redis_errors":0,"redis_ttl_update":1}(env)
 ```
 -------------------------------------------------------
+
 ### Kiali 
+
 execute the Observer:
 ```bash
 cd Observation/
