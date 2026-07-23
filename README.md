@@ -127,6 +127,12 @@ my-cluster-dual-role-2                       1/1     Running   0          4m54s
 my-cluster-entity-operator-b55dd54f4-fs697   2/2     Running   0          3m59s
 strimzi-cluster-operator-798fbc76f7-9qj69    1/1     Running   0          5m51s
 ```
+Check the Kafka Broker availability and right configuration:
+```bash
+kubectl get broker
+NAME           URL                                                                                   AGE   READY   REASON
+kafka-broker   http://kafka-broker-ingress.knative-eventing.svc.cluster.local/default/kafka-broker   44s   True 
+```
 --------------------------------------------------------------------------------
 ## REST API interface deployment
 Deployment of the stateless rest api interface for edge node access
@@ -144,8 +150,43 @@ NAME        URL                                    LATESTCREATED     LATESTREADY
 image-api   http://image-api.default.example.com   image-api-00001   image-api-00001   True
 ```
 -----------------------------------------------------------------------------------------
-### Inference fast deployment
+### Inference Deployment
 
+Before deploying the KServe InferenceService, the model weights must be loaded into the cluster:
+```bash
+cd InferenceService/
+kubectl apply -f 01-jobs-and-pvcs.yaml
+
+kubectl get job
+NAME                       STATUS     COMPLETIONS   DURATION   AGE
+simple-cnn-copy-job        Complete   1/1           9s         10s
+simple-cnn-test-copy-job   Complete   1/1           9s         10s
+
+kubectl get pvc
+NAME                  STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+simple-cnn-pvc        Bound    pvc-667f8081-e77a-43a1-8c14-4ec7b0c2658b   100Mi      RWO            standard       <unset>                 13s
+simple-cnn-test-pvc   Bound    pvc-796552a8-ea68-4ff0-bb20-5abe3206022d   200Mi      RWO            standard       <unset>                 13s
+
+
+```
+This creates a Kubernetes Job for each model to copy its weights into local PVCs.
+Note: In a production environment, models are not loaded via PVCs; instead, the storageUri in the InferenceService directly references a central model Kubeflow registry.
+
+Deploy the KServe inference models along with their transformers for pre- and post-processing:
+```bash
+kubectl apply -f 02-inferenceservices.yaml
+
+kubectl get pods
+NAME                                                            READY   STATUS    RESTARTS   AGE
+image-api-00001-deployment-594d756b58-gj5s7                     2/2     Running   0          2m45s
+simple-cnn-predictor-00001-deployment-68d8798bc6-4p6hr          2/2     Running   0          73s
+simple-cnn-test-predictor-00001-deployment-d7b6db9cb-xbv75      2/2     Running   0          71s
+simple-cnn-test-transformer-00001-deployment-66455c757b-p4qsx   2/2     Running   0          70s
+simple-cnn-transformer-00001-deployment-b76765c96-s2vnq         2/2     Running   0          73s
+
+```
+
+<!-- 
 A fast deployment script is available for setting up the inference cluster on KServe.
  The cluster configuration used by the deployment script can be found in cont.json.
 
@@ -182,6 +223,8 @@ simple-cnn-test-predictor-00001-deployment-7c68b6d7d5-znmqt    2/2     Running  
 simple-cnn-test-transformer-00001-deployment-57f67cd8d-52jll   2/2     Running   0          78s
 simple-cnn-transformer-00001-deployment-84f75cdcdc-kwstb       2/2     Running   0 
 ```
+-->
+
 Check the kserve knative inference services avalilability:
 ```bash
 kubectl get ksvc
