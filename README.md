@@ -343,76 +343,95 @@ The inference pass trough the RestAPI interface level
 ```bash
 cd /InferenceService/model_testing
 
-curl -X POST \
-"http://localhost:8080/predict_encoded?model=simple-cnn-test" \
--H "Host: image-api.default.example.com" \
--H "Content-Type: image/png" \
---data-binary @immagine.png
+curl -X POST "http://localhost:8080/predict_encoded?model=simple-cnn-test" \
+  -H "Host: image-api.default.example.com" \
+  -H "Content-Type: image/png" \
+  --data-binary "@immagine.png"
 
 {"predicted_class":2}
 
 curl -X POST "http://localhost:8080/predict_encoded?model=simple-cnn" \
--H "Host: image-api.default.example.com" \ 
--H "Content-Type: image/png" \
- --data-binary @immagine.png
+  -H "Host: image-api.default.example.com" \
+  -H "Content-Type: image/png" \
+  --data-binary "@immagine.png"
 
 {"predicted_class":2}
+
 -------------------------------------------------------------------------------------------------
-curl  -X POST \
-"http://localhost:8080/predict_encoded_multipart" \
--H "Host: image-api.default.example.com" \
--F "image=@immagine.png" \
--F "model=simple-cnn"
+
+curl -X POST "http://localhost:8080/predict_encoded_multipart" \
+  -H "Host: image-api.default.example.com" \
+  -F "image=@immagine.png" \
+  -F "model=simple-cnn"
 
 {"predicted_class":2}
 
-curl  -X POST "http://localhost:8080/predict_encoded_multipart" \
--H "Host: image-api.default.example.com" \
--F "image=@immagine.png" \
--F "model=simple-cnn-test"
+curl -X POST "http://localhost:8080/predict_encoded_multipart" \
+  -H "Host: image-api.default.example.com" \
+  -F "image=@immagine.png" \
+  -F "model=simple-cnn-test"
 
 {"predicted_class":2}
+
 -------------------------------------------------------------------------------------------------
+
 curl -X POST "http://localhost:8080/predict_batch_encoded_multipart" \
--H "Host: image-api.default.example.com" \
--F "files=@immagine.png" \
--F "files=@immagine.png" \
--F "models=simple-cnn,simple-cnn-test"-cnn,simple-cnn-test"
+  -H "Host: image-api.default.example.com" \
+  -F "files=@immagine.png" \
+  -F "files=@immagine.png" \
+  -F "models=simple-cnn,simple-cnn-test"
 
-{"predictions":[{"model":"simple-cnn","predicted_class":2},{"model":"simple-cnn-test","predicted_class":2}]}
--------------------------------------------------------------------------------------------------
-curl -X POST \
-"http://localhost:8080/predict_batch_encoded?models=simple-cnn,simple-cnn-test" \
--H "Host: image-api.default.example.com" \
--H "Content-Type: application/octet-stream" \
--H "X-Image-Sizes: 674,674" \
---data-binary @batch.bin
+{
+  "predictions": [
+    {"model": "simple-cnn", "predicted_class": 2},
+    {"model": "simple-cnn-test", "predicted_class": 2}
+  ]
+}
 
-{"predictions":[{"model":"simple-cnn","predicted_class":2},{"model":"simple-cnn-test","predicted_class":2}]}
 -------------------------------------------------------------------------------------------------
-curl -X POST \
-"http://localhost:8080/predict?model=simple-cnn" \
--H "Host: image-api.default.example.com" \
--H "Content-Type: application/octet-stream" \
---data-binary @image.raw
+
+curl -X POST "http://localhost:8080/predict_batch_encoded?models=simple-cnn,simple-cnn-test" \
+  -H "Host: image-api.default.example.com" \
+  -H "Content-Type: application/octet-stream" \
+  -H "X-Image-Sizes: 674,674" \
+  --data-binary "@batch.bin"
+
+{
+  "predictions": [
+    {"model": "simple-cnn", "predicted_class": 2},
+    {"model": "simple-cnn-test", "predicted_class": 2}
+  ]
+}
+
+-------------------------------------------------------------------------------------------------
+
+curl -X POST "http://localhost:8080/predict?model=simple-cnn" \
+  -H "Host: image-api.default.example.com" \
+  -H "Content-Type: application/octet-stream" \
+  --data-binary "@image.raw"
 
 {"predicted_class":0}
 
 curl -X POST "http://localhost:8080/predict?model=simple-cnn-test" \
--H "Host: image-api.default.example.com" \
--H "Content-Type: application/octet-stream" \
---data-binary @image.raw
+  -H "Host: image-api.default.example.com" \
+  -H "Content-Type: application/octet-stream" \
+  --data-binary "@image.raw"
 
 {"predicted_class":0}
+
 -------------------------------------------------------------------------------------------------
 
-curl -X POST \
-"http://localhost:8080/predict_batch?models=simple-cnn,simple-cnn-test" \
--H "Host: image-api.default.example.com" \
--H "Content-Type: application/octet-stream" \
---data-binary @payload.bin
+curl -X POST "http://localhost:8080/predict_batch?models=simple-cnn,simple-cnn-test" \
+  -H "Host: image-api.default.example.com" \
+  -H "Content-Type: application/octet-stream" \
+  --data-binary "@payload.bin"
 
-{"predictions":[{"model":"simple-cnn","predicted_class":0},{"model":"simple-cnn-test","predicted_class":0}]}
+{
+  "predictions": [
+    {"model": "simple-cnn", "predicted_class": 0},
+    {"model": "simple-cnn-test", "predicted_class": 0}
+  ]
+}
 
 ```
 
