@@ -1,0 +1,65 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: simple-cnn
+  namespace: default
+spec:
+  predictor:
+    model:
+      modelFormat:
+        name: tensorflow
+      storageUri: pvc://simple-cnn-pvc/
+  transformer:
+    containers:
+      - name: kserve-container
+        image: tomasconti02/cnn-transformer-key:v4
+        command:
+          - python
+          - -m
+          - transformer
+        args:
+          - --model_names
+          - simple-cnn,simple-cnn-test
+          - --namespace
+          - default
+          - --predictor_port
+          - "8080"
+          - --broker
+          - http://kafka-broker-ingress.knative-eventing.svc.cluster.local/default/kafka-broker
+          - --broker_host
+          - kafka-broker-ingress.knative-eventing.svc.cluster.local
+          - --ce_type
+          - org.kubeflow.serving.inference.request
+---
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: simple-cnn-test
+  namespace: default
+spec:
+  predictor:
+    model:
+      modelFormat:
+        name: tensorflow
+      storageUri: pvc://simple-cnn-test-pvc/
+  transformer:
+    containers:
+      - name: kserve-container
+        image: tomasconti02/cnn-transformer-key:v4
+        command:
+          - python
+          - -m
+          - transformer
+        args:
+          - --model_names
+          - simple-cnn,simple-cnn-test
+          - --namespace
+          - default
+          - --predictor_port
+          - "8080"
+          - --broker
+          - http://kafka-broker-ingress.knative-eventing.svc.cluster.local/default/kafka-broker
+          - --broker_host
+          - kafka-broker-ingress.knative-eventing.svc.cluster.local
+          - --ce_type
+          - org.kubeflow.serving.inference.request
