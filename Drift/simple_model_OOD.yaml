@@ -14,7 +14,7 @@ spec:
       containerConcurrency: 100
       containers:
         - name: ood-detector
-          image: docker.io/tomasconti02/ood-detector:v19
+          image: docker.io/tomasconti02/ood-detector:v20
           ports:
             - containerPort: 8080
           resources:
