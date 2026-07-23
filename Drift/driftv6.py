@@ -290,7 +290,9 @@ async def worker_loop():
     log.info("Worker started")
     try:
         while True:
-            item = await queue.get() 
+
+            item = await queue.get() #even loop get msg from the queue 
+
             insts = item["instances"]
             eid = item.get("event_id", "unknown")
             image_key = item.get("image_key", "unknown-key")
