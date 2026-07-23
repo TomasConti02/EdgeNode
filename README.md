@@ -3,9 +3,20 @@
 Edge Node is a Kubernetes-based AI inference platform designed to serve machine learning models into 5G k8s computing environments.
 main files:
 - [ RestAPI interface ](RestAPI/RestAPI.py)
+  - [ RestAPI interface yaml ](RestAPI/service.yaml)
+  - [ RestAPI interface Docker ](RestAPI/Dockerfile)
+
 - [ Inference entry point ](InferenceService/model/transformer_final.py)
+  - [ Inference Docker ](InferenceService/model/Docker.transformer)
+  - [ Inference models weights loader yaml](InferenceService/01-jobs-and-pvcs.yaml)
+  - [ Inference service yaml](InferenceService/02-inferenceservices.yaml)
+
 - [ Strimzi Kafka cluster ](Knative_Eventing/Kafka/Kafka_cluster_multi_node.yaml)
+
 - [ OOD detector ](Drift/driftv6.py)
+  - [ OOD detector simple cnn yaml ](Drift/simple_model_OOD.yaml)
+  - [ OOD detector simple cnn test yaml ](Drift/simple_model_test_OOD.yaml)
+  - [ OOD detector Docker ](Drift/Dockerfile)
 
 --------------------------------------------------------------------------
 
