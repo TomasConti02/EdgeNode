@@ -9,13 +9,13 @@
       "name": "simple-cnn",
       "image": "tomasconti02/mnist-embedding-model:1",
       "storage_size": "100Mi",
-      "transformer_image": "tomasconti02/transformer_final:v9"
+      "transformer_image": "tomasconti02/cnn-transformer-key:v4"
     },
     {
       "name": "simple-cnn-test",
       "image": "tomasconti02/mnist-embedding-model:1",
       "storage_size": "200Mi",
-      "transformer_image": "tomasconti02/transformer_final:v9"
+      "transformer_image": "tomasconti02/cnn-transformer-key:v4"
     }
   ]
 }
