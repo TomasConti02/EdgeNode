@@ -1,0 +1,145 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: simple-cnn
+  namespace: default
+spec:
+  predictor:
+    annotations:
+      autoscaling.knative.dev/min-scale: "1"
+    nodeSelector:
+      kubernetes.io/hostname: nvidia-ca7
+    batcher:
+      maxBatchSize: 8
+      maxLatency: 100
+    model:
+      modelFormat:
+        name: tensorflow
+      runtimeVersion: "latest-gpu"
+      storageUri: pvc://simple-cnn-pvc/
+      args:
+        - --model_name=simple-cnn
+        - --port=9000
+        - --rest_api_port=8080
+        - --model_base_path=/mnt/models
+        - --rest_api_timeout_in_ms=60000
+        - --per_process_gpu_memory_fraction=0.4
+      env:
+        - name: TF_FORCE_GPU_ALLOW_GROWTH
+          value: "true"
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: "all"
+        - name: NVIDIA_DRIVER_CAPABILITIES
+          value: "compute,utility"
+        - name: LD_LIBRARY_PATH
+          value: "/usr/local/cuda/lib64:/usr/local/cuda/lib"
+      resources:
+        limits:
+          nvidia.com/gpu: "1"
+        requests:
+          nvidia.com/gpu: "1"
+  transformer:
+    annotations:
+      autoscaling.knative.dev/min-scale: "1"
+    nodeSelector:
+      kubernetes.io/hostname: nvidia-ca7
+    containers:
+      - name: kserve-container
+        image: tomasconti02/transformer_restnet18_32fp:v1
+        resources:
+          requests:
+            cpu: "1000m"
+            memory: "2Gi"
+          limits:
+            cpu: "4000m"
+            memory: "4Gi"
+        command:
+          - python
+          - -m
+          - transformer
+        args:
+          - --model_names
+          - simple-cnn,simple-cnn-test
+          - --namespace
+          - default
+          - --predictor_port
+          - "8080"
+          - --broker
+          - http://kafka-broker-ingress.knative-eventing.svc.cluster.local/default/kafka-broker
+          - --broker_host
+          - kafka-broker-ingress.knative-eventing.svc.cluster.local
+          - --ce_type
+          - org.kubeflow.serving.inference.request
+---
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: simple-cnn-test
+  namespace: default
+spec:
+  predictor:
+    annotations:
+      autoscaling.knative.dev/min-scale: "1"
+    nodeSelector:
+      kubernetes.io/hostname: nvidia-ca7
+    batcher:
+      maxBatchSize: 8
+      maxLatency: 100
+    model:
+      modelFormat:
+        name: tensorflow
+      runtimeVersion: "latest-gpu"
+      storageUri: pvc://simple-cnn-test-pvc/
+      args:
+        - --model_name=simple-cnn-test
+        - --port=9000
+        - --rest_api_port=8080
+        - --model_base_path=/mnt/models
+        - --rest_api_timeout_in_ms=60000
+        - --per_process_gpu_memory_fraction=0.4
+      env:
+        - name: TF_FORCE_GPU_ALLOW_GROWTH
+          value: "true"
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: "all"
+        - name: NVIDIA_DRIVER_CAPABILITIES
+          value: "compute,utility"
+        - name: LD_LIBRARY_PATH
+          value: "/usr/local/cuda/lib64:/usr/local/cuda/lib"
+      resources:
+        limits:
+          nvidia.com/gpu: "1"
+        requests:
+          nvidia.com/gpu: "1"
+  transformer:
+    annotations:
+      autoscaling.knative.dev/min-scale: "1"
+    nodeSelector:
+      kubernetes.io/hostname: nvidia-ca7
+    containers:
+      - name: kserve-container
+        image: tomasconti02/transformer_restnet18_32fp:v1
+        resources:
+          requests:
+            cpu: "1000m"
+            memory: "2Gi"
+          limits:
+            cpu: "4000m"
+            memory: "4Gi"
+        command:
+          - python
+          - -m
+          - transformer
+        args:
+          - --model_names
+          - simple-cnn,simple-cnn-test
+          - --namespace
+          - default
+          - --predictor_port
+          - "8080"
+          - --broker
+          - http://kafka-broker-ingress.knative-eventing.svc.cluster.local/default/kafka-broker
+          - --broker_host
+          - kafka-broker-ingress.knative-eventing.svc.cluster.local
+          - --ce_type
+          - org.kubeflow.serving.inference.request
