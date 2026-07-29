@@ -18,7 +18,8 @@ from datetime import timezone
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("ood-detector")
-
+RETRY_DELAY = 0.1 # 100 ms
+RETRY=10
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost") #Redis is into the ood detector pos, sidcar istio service mesh, redis and ood containers share the same local host/Pod
 REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
 REDIS_IMAGE_TTL = int(os.getenv("REDIS_IMAGE_TTL", "600")) #10min
@@ -286,6 +287,16 @@ async def forward_ood_batch():
         # Guarantee cleanup runs regardless of HTTP success or failure
         await cleanup_redis_keys()
 ##########################################################################################################################################################
+async def wait_for_redis_image(  img_key: str,  meta_key: str,  retries: int = 10):
+    for attempt in range(RETRY):
+        img = await redis_client.get(img_key)
+        meta = await redis_client.hgetall(meta_key)
+        if img is not None and meta:
+            if attempt > 0:
+                log.info( f"Redis object {img_key} became available after {attempt} retries." )
+            return img, meta
+        await asyncio.sleep(RETRY_DELAY)
+    return None, None
 async def worker_loop():
     log.info("Worker started")
     try:
@@ -314,6 +325,11 @@ async def worker_loop():
                     if ood: # if a ood has been detected
                         log.warning(f"OOD detected with redis key -> {image_key}")
                         try:#check the already stored item
+                            img_bytes, meta_dict = await wait_for_redis_image( img_redis_key, meta_redis_key, )
+                            if img_bytes is None or not meta_dict:
+                                log.error( f"Skipping TTL extension for key {img_redis_key}: " "Image or metadata not available after retries." )
+                                continue
+                            """"
                             img_bytes = await redis_client.get(img_redis_key) 
                             meta_dict = await redis_client.hgetall(meta_redis_key)
                             
@@ -324,7 +340,7 @@ async def worker_loop():
                                     "Allowing initial TTL to expire remaining keys automatically."
                                 )
                                 continue #skip the item elaboration 
-
+                            """
                             log.info(f"Retrieved OOD image blob ({len(img_bytes)} bytes) for key {img_redis_key}")
                             log.info(f"Retrieved OOD metadata: {meta_dict}")
                             #because the system have received the kantive inference eventing is ok update the ood ttl increasing the life of the component
