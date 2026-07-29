@@ -1,0 +1,17 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir \
+    kserve==0.11.0 \
+    tensorflow-cpu==2.14.0 \
+    numpy \
+    aiohttp==3.9.5 \
+
+COPY transformer_final.py /app/transformer.py
+
+ENV TRANSFORMER_NAME=cnn-transformer
+
+EXPOSE 8080
+
+ENTRYPOINT ["python", "transformer.py"]

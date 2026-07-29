@@ -1,0 +1,32 @@
+     execution: local
+        script: load-test.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 30 max VUs, 3m30s max duration (incl. graceful stop):
+              * default: Up to 30 looping VUs for 3m0s over 4 stages (gracefulRampDown: 30s, gracefulStop: 30s)
+
+INFO[0182] [k6-reporter v3.0.4] Generating HTML summary report, with theme: default  source=console
+     ✓ status is 200
+     ✓ body has content
+
+     checks.........................: 100.00% ✓ 2870     ✗ 0   
+     data_received..................: 394 kB  2.2 kB/s
+     data_sent......................: 2.3 MB  13 kB/s
+     http_req_blocked...............: avg=3.1ms      min=2.05µs     med=7.89µs     max=1.17s       p(90)=11.78µs    p(95)=14.17µs    
+     http_req_connecting............: avg=3.08ms     min=0s         med=0s         max=1.17s       p(90)=0s         p(95)=0s         
+     http_req_duration..............: avg=1.39s      min=104.28ms   med=1.05s      max=6.66s       p(90)=2.83s      p(95)=3.28s      
+       { expected_response:true }...: avg=1.39s      min=104.28ms   med=1.05s      max=6.66s       p(90)=2.83s      p(95)=3.28s      
+   ✓ http_req_failed................: 0.00%   ✓ 0        ✗ 1435
+     http_req_receiving.............: avg=91.63µs    min=13.38µs    med=87.67µs    max=1.32ms      p(90)=130.75µs   p(95)=151.3µs    
+     http_req_sending...............: avg=37.28µs    min=5.41µs     med=34.64µs    max=363.88µs    p(90)=52.1µs     p(95)=67.71µs    
+     http_req_tls_handshaking.......: avg=0s         min=0s         med=0s         max=0s          p(90)=0s         p(95)=0s         
+     http_req_waiting...............: avg=1.39s      min=103.95ms   med=1.05s      max=6.66s       p(90)=2.83s      p(95)=3.28s      
+     http_reqs......................: 1435    7.958897/s
+   ✗ inference_processing_time......: avg=1397.20397 min=104.283578 med=1059.05084 max=6669.659535 p(90)=2831.22397 p(95)=3289.323457
+     iteration_duration.............: avg=1.5s       min=205.11ms   med=1.16s      max=6.77s       p(90)=2.93s      p(95)=3.39s      
+     iterations.....................: 1435    7.958897/s
+     vus............................: 1       min=1      max=30
+
+running (3m00.3s), 00/30 VUs, 1435 complete and 0 interrupted iterations
+default ✓ [======================================] 00/30 VUs  3m0s
+ERRO[0182] thresholds on metrics 'inference_processing_time' have been crossed 
