@@ -8,48 +8,51 @@ const model1InferenceDuration = new Trend('model1_inference_processing_time');
 const alternatingInferenceDuration = new Trend('alternating_inference_processing_time');
 const batchInferenceDuration = new Trend('batch_inference_processing_time');
 
-//  6m30s (390 secondi) is each test duration with 1min of the stop between each end point test 
+// 7m 30s is each test duration with 1min of the stop between each end point test 
 export const options = {
   scenarios: {
-    // single end point call only simple-cnn (0s -> 6m30s)
+    // single end point call only simple-cnn (0s -> 7m30s)
     test_model_1: {
       executor: 'ramping-vus',
       startVUs: 0,
       startTime: '0s',
       stages: [
-        { duration: '1m', target: 5 },   //warm up 
+        { duration: '1m', target: 5 },   // warm up 
         { duration: '2m', target: 15 },  
         { duration: '2m', target: 30 },  
+        { duration: '1m', target: 30 },  // sustained peak at 30 VU for 1 minute
         { duration: '1m', target: 15 },  
         { duration: '30s', target: 0 },  
       ],
       exec: 'testModel1',
     },
     
-    // single end point call but with the change of the target model simple-cnn & simple-cnn-test (start after 7m30s with 1min of stop)
+    // single end point call but with the change of the target model simple-cnn & simple-cnn-test (start after 8m30s with 1min of stop)
     test_alternating: {
       executor: 'ramping-vus',
       startVUs: 0,
-      startTime: '7m30s',
+      startTime: '8m30s',
       stages: [
-        { duration: '1m', target: 5 },   //warm up 
-        { duration: '2m', target: 15 },  
+        { duration: '1m', target: 5 },   // warm up 
+        { duration: '2m', target: 15 },  // target are Virtual Users
         { duration: '2m', target: 30 },  
+        { duration: '1m', target: 30 },  // sustained peak at 30 VU for 1 minute
         { duration: '1m', target: 15 },  
         { duration: '30s', target: 0 },  
       ],
       exec: 'testAlternating',
     },
 
-    // Batch endpoint (start after 15m0s)
+    // Batch endpoint (start after 17m0s)
     test_batch: {
       executor: 'ramping-vus',
       startVUs: 0,
-      startTime: '15m0s',
+      startTime: '17m0s',
       stages: [
-        { duration: '1m', target: 5 },   //warm up 
+        { duration: '1m', target: 5 },   // warm up 
         { duration: '2m', target: 15 },  
         { duration: '2m', target: 30 },  
+        { duration: '1m', target: 30 },  // sustained peak at 30 VU for 1 minute
         { duration: '1m', target: 15 },  
         { duration: '30s', target: 0 },  
       ],
