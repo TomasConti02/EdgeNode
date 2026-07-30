@@ -8,7 +8,7 @@ EdgeNode is a Kubernetes-based AI inference platform designed to serve machine l
   - [ RestAPI interface yaml ](RestAPI/service.yaml)
   - [ RestAPI interface Docker ](RestAPI/Dockerfile)
 
-- [ Inference entry point ](InferenceService/model/transformer_final.py)
+- [ Inference entry point ](InferenceService/model/transformer_final_resnet.py)
   - [ Inference Docker ](InferenceService/model/Docker.transformer)
   - [ Inference models weights loader yaml](InferenceService/01-jobs-and-pvcs.yaml)
   - [ Inference service yaml](InferenceService/02-inferenceservices.yaml)
