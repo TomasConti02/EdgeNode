@@ -21,9 +21,9 @@ EdgeNode is a Kubernetes-based AI inference platform designed to serve machine l
   - [ OOD detector simple cnn test yaml ](Drift/simple_model_test_OOD.yaml)
   - [ OOD detector Docker ](Drift/Dockerfile)
 
-- [ K6 test script ](InferenceService/model_testing/test-load.js)
-  - [ K6 test script results txt ](InferenceService/model_testing/test-load.txt)
-  - [ K6 test script results browser  ](InferenceService/model_testing/report-sequential_alternating.html)
+- [ K6 test script ](InferenceService/model_testing/good_test.js)
+  - [ K6 test script results txt ](InferenceService/model_testing/good_results.txt)
+  - [ K6 test script results browser  ](InferenceService/model_testing/kserve-inference-report.html)
   - [ K6 test script results txt  server side](InferenceService/model_testing/test-load-serverside.txt)
 --------------------------------------------------------------------------
 
