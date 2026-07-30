@@ -26,7 +26,7 @@ EdgeNode is a Kubernetes-based AI inference platform designed to serve machine l
   - [ K6 test script results browser  ](InferenceService/model_testing/kserve-inference-report.html)
   - [ K6 test script results txt  server side](InferenceService/model_testing/test-load-serverside.txt)
 --------------------------------------------------------------------------
-
+sudo openvpn --dev tun --config pfSense-UDP4-3465-connect-config.ovpn
 ### Kiali high level view of the system result
 
 ![Demo Kiali Inference](sample/good.gif)
@@ -439,7 +439,13 @@ curl -X POST "http://localhost:8080/predict_batch?models=simple-cnn,simple-cnn-t
 }
 
 ```
+-----------------------------------------------------------------------------------------
+kubectl port-forward svc/simple-cnn-transformer 8080:80
 
+curl -X POST "http://localhost:8080/v1/models/simple-cnn:predict" \
+  -H "Content-Type: application/octet-stream" \
+  --data-binary "@image.raw"
+-----------------------------------------------------------------------------------------
 Check the system log to verify the operability:
 ```bash
 kubectl logs <<<<<<<<<  image-api -pod name >>>>>>>>>>>>>
