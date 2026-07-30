@@ -20,6 +20,7 @@ EdgeNode is a Kubernetes-based AI inference platform designed to serve machine l
   - [ OOD detector simple cnn test yaml ](Drift/simple_model_test_OOD.yaml)
   - [ OOD detector Docker ](Drift/Dockerfile)
 
+- [ K6 test script ](InferenceService/model_testing/test-load.js)
 --------------------------------------------------------------------------
 
 ### Kiali high level view of the system result
@@ -509,3 +510,436 @@ Kiali allows tracking service mesh traffic!
 
 Traffic enters through the Istio gateway, while the Knative gateway maintains the service mesh traffic rules and redirects traffic to each service mesh entrypoints. The Knative Serving operator keeps track of the service proxy mesh traffic entrypoints.
 
+----------------------------------------
+
+# DataCenter commands:
+
+```bash
+ssh -L 20001:localhost:20001 tconti@192.168.17.37
+kubectl port-forward svc/kiali -n istio-system 20001:20001
+
+curl -X POST "http://192.168.17.37:31978/predict_batch_encoded?models=simple-cnn,simple-cnn-test" \
+  -H "Host: image-api.default.example.com" \
+  -H "Content-Type: application/octet-stream" \
+  -H "X-Image-Sizes: 674,674" \
+  --data-binary "@batch.bin"
+
+kubectl patch configmap/config-features \
+  -n knative-serving \
+  --type merge \
+  -p '{"data":{"kubernetes.podspec-nodeselector":"enabled"}}'
+
+###############################################################################################
+kubectl apply -n kube-system -f - <<EOF
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: time-slicing-config
+  namespace: kube-system
+data:
+  time-slicing-config: |-
+    version: v1
+    sharing:
+      timeSlicing:
+        resources:
+          - name: nvidia.com/gpu
+            replicas: 4
+EOF
+
+kubectl patch daemonset nvidia-device-plugin-daemonset -n kube-system --type=strategic -p '{
+  "spec": {
+    "template": {
+      "spec": {
+        "containers": [
+          {
+            "name": "nvidia-device-plugin-ctr",
+            "args": ["--config-file=/etc/config/time-slicing-config"],
+            "volumeMounts": [
+              {
+                "name": "config-volume",
+                "mountPath": "/etc/config"
+              }
+            ]
+          }
+        ],
+        "volumes": [
+          {
+            "name": "config-volume",
+            "configMap": {
+              "name": "time-slicing-config"
+            }
+          }
+        ]
+      }
+    }
+  }
+}'
+
+kubectl rollout restart daemonset nvidia-device-plugin-daemonset -n kube-system
+
+# Check node GPU capacity and allocation
+kubectl describe node nvidia-ca7 | grep "nvidia.com/gpu"
+
+# Verify device plugin pod status
+kubectl get pods -n kube-system | grep nvidia
+
+# Inspect plugin logs (used for troubleshooting)
+kubectl logs -n kube-system -l app.kubernetes.io/name=nvidia-device-plugin-ds
+
+####################################################################################################
+
+
+sudo nano /etc/systemd/system/k3s-agent.service
+ExecStart=/usr/local/bin/k3s \
+    agent \
+    '--node-ip=192.168.17.211' \
+    --default-runtime nvidia
+sudo systemctl daemon-reload
+sudo systemctl restart k3s-agent
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: simple-cnn
+  namespace: default
+spec:
+  predictor:
+    annotations:
+      autoscaling.knative.dev/min-scale: "1"
+    nodeSelector:
+      kubernetes.io/hostname: nvidia-ca7
+    model:
+      modelFormat:
+        name: tensorflow
+      runtimeVersion: "latest-gpu"
+      storageUri: pvc://simple-cnn-pvc/
+      env:
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: "all"
+        - name: NVIDIA_DRIVER_CAPABILITIES
+          value: "compute,utility"
+        - name: LD_LIBRARY_PATH
+          value: "/usr/local/cuda/lib64:/usr/local/cuda/lib"
+      resources:
+        limits:
+          nvidia.com/gpu: "1"
+        requests:
+          nvidia.com/gpu: "1"
+  transformer:
+    annotations:
+      autoscaling.knative.dev/min-scale: "1"
+    containers:
+      - name: kserve-container
+        image: tomasconti02/cnn-transformer-cuda:v1
+        command:
+          - python
+          - -m
+          - transformer
+        args:
+          - --model_names
+          - simple-cnn,simple-cnn-test
+          - --namespace
+          - default
+          - --predictor_port
+          - "8080"
+          - --broker
+          - http://kafka-broker-ingress.knative-eventing.svc.cluster.local/default/kafka-broker
+          - --broker_host
+          - kafka-broker-ingress.knative-eventing.svc.cluster.local
+          - --ce_type
+          - org.kubeflow.serving.inference.request
+---
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: simple-cnn-test
+  namespace: default
+spec:
+  predictor:
+    annotations:
+      autoscaling.knative.dev/min-scale: "1"
+    nodeSelector:
+      kubernetes.io/hostname: nvidia-ca7
+    model:
+      modelFormat:
+        name: tensorflow
+      runtimeVersion: "latest-gpu"
+      storageUri: pvc://simple-cnn-test-pvc/
+      env:
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: "all"
+        - name: NVIDIA_DRIVER_CAPABILITIES
+          value: "compute,utility"
+        - name: LD_LIBRARY_PATH
+          value: "/usr/local/cuda/lib64:/usr/local/cuda/lib"
+      resources:
+        limits:
+          nvidia.com/gpu: "1"
+        requests:
+          nvidia.com/gpu: "1"
+  transformer:
+    annotations:
+      autoscaling.knative.dev/min-scale: "1"
+    containers:
+      - name: kserve-container
+        image: tomasconti02/cnn-transformer-cuda:v1
+        command:
+          - python
+          - -m
+          - transformer
+        args:
+          - --model_names
+          - simple-cnn,simple-cnn-test
+          - --namespace
+          - default
+          - --predictor_port
+          - "8080"
+          - --broker
+          - http://kafka-broker-ingress.knative-eventing.svc.cluster.local/default/kafka-broker
+          - --broker_host
+          - kafka-broker-ingress.knative-eventing.svc.cluster.local
+          - --ce_type
+          - org.kubeflow.serving.inference.request
+##########################################################################################################################################
+nvtop
+#########################################################################################################################################
+cat 02-inferenceservices.yaml 03-old-inferenceservices.yaml 
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: simple-cnn
+  namespace: default
+spec:
+  predictor:
+    annotations:
+      autoscaling.knative.dev/min-scale: "1"
+    nodeSelector:
+      kubernetes.io/hostname: nvidia-ca7
+    model:
+      modelFormat:
+        name: tensorflow
+      runtimeVersion: "latest-gpu"
+      storageUri: pvc://simple-cnn-pvc/
+      args:
+        - --model_name=simple-cnn
+        - --port=9000
+        - --rest_api_port=8080
+        - --model_base_path=/mnt/models
+        - --rest_api_timeout_in_ms=60000
+        - --per_process_gpu_memory_fraction=0.4
+      env:
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: "all"
+        - name: NVIDIA_DRIVER_CAPABILITIES
+          value: "compute,utility"
+        - name: LD_LIBRARY_PATH
+          value: "/usr/local/cuda/lib64:/usr/local/cuda/lib"
+      resources:
+        limits:
+          nvidia.com/gpu: "1"
+        requests:
+          nvidia.com/gpu: "1"
+  transformer:
+    annotations:
+      autoscaling.knative.dev/min-scale: "1"
+    nodeSelector:
+      accelerator: cpu-only
+    containers:
+      - name: kserve-container
+        image: tomasconti02/cnn-transformer-key:v4
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "512Mi"
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+        command:
+          - python
+          - -m
+          - transformer
+        args:
+          - --model_names
+          - simple-cnn,simple-cnn-test
+          - --namespace
+          - default
+          - --predictor_port
+          - "8080"
+          - --broker
+          - http://kafka-broker-ingress.knative-eventing.svc.cluster.local/default/kafka-broker
+          - --broker_host
+          - kafka-broker-ingress.knative-eventing.svc.cluster.local
+          - --ce_type
+          - org.kubeflow.serving.inference.request
+---
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: simple-cnn-test
+  namespace: default
+spec:
+  predictor:
+    annotations:
+      autoscaling.knative.dev/min-scale: "1"
+    nodeSelector:
+      kubernetes.io/hostname: nvidia-ca7
+    model:
+      modelFormat:
+        name: tensorflow
+      runtimeVersion: "latest-gpu"
+      storageUri: pvc://simple-cnn-test-pvc/
+      args:
+        - --model_name=simple-cnn-test
+        - --port=9000
+        - --rest_api_port=8080
+        - --model_base_path=/mnt/models
+        - --rest_api_timeout_in_ms=60000
+        - --per_process_gpu_memory_fraction=0.4
+      env:
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: "all"
+        - name: NVIDIA_DRIVER_CAPABILITIES
+          value: "compute,utility"
+        - name: LD_LIBRARY_PATH
+          value: "/usr/local/cuda/lib64:/usr/local/cuda/lib"
+      resources:
+        limits:
+          nvidia.com/gpu: "1"
+        requests:
+          nvidia.com/gpu: "1"
+  transformer:
+    annotations:
+      autoscaling.knative.dev/min-scale: "1"
+    nodeSelector:
+      accelerator: cpu-only
+    containers:
+      - name: kserve-container
+        image: tomasconti02/cnn-transformer-key:v4
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "512Mi"
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+        command:
+          - python
+          - -m
+          - transformer
+        args:
+          - --model_names
+          - simple-cnn,simple-cnn-test
+          - --namespace
+          - default
+          - --predictor_port
+          - "8080"
+          - --broker
+          - http://kafka-broker-ingress.knative-eventing.svc.cluster.local/default/kafka-broker
+          - --broker_host
+          - kafka-broker-ingress.knative-eventing.svc.cluster.local
+          - --ce_type
+          - org.kubeflow.serving.inference.request
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: simple-cnn
+  namespace: default
+spec:
+  predictor:
+    annotations:
+      autoscaling.knative.dev/min-scale: "1"
+    nodeSelector:
+      kubernetes.io/hostname: nvidia-ca7
+    model:
+      modelFormat:
+        name: tensorflow
+      runtimeVersion: "latest-gpu"
+      storageUri: pvc://simple-cnn-pvc/
+      env:
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: "all"
+        - name: NVIDIA_DRIVER_CAPABILITIES
+          value: "compute,utility"
+        - name: LD_LIBRARY_PATH
+          value: "/usr/local/cuda/lib64:/usr/local/cuda/lib"
+      resources:
+        limits:
+          nvidia.com/gpu: "1"
+        requests:
+          nvidia.com/gpu: "1"
+  transformer:
+    annotations:
+      autoscaling.knative.dev/min-scale: "1"
+    containers:
+      - name: kserve-container
+        image: tomasconti02/cnn-transformer-cuda:v1
+        command:
+          - python
+          - -m
+          - transformer
+        args:
+          - --model_names
+          - simple-cnn,simple-cnn-test
+          - --namespace
+          - default
+          - --predictor_port
+          - "8080"
+          - --broker
+          - http://kafka-broker-ingress.knative-eventing.svc.cluster.local/default/kafka-broker
+          - --broker_host
+          - kafka-broker-ingress.knative-eventing.svc.cluster.local
+          - --ce_type
+          - org.kubeflow.serving.inference.request
+---
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: simple-cnn-test
+  namespace: default
+spec:
+  predictor:
+    annotations:
+      autoscaling.knative.dev/min-scale: "1"
+    nodeSelector:
+      kubernetes.io/hostname: nvidia-ca7
+    model:
+      modelFormat:
+        name: tensorflow
+      runtimeVersion: "latest-gpu"
+      storageUri: pvc://simple-cnn-test-pvc/
+      env:
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: "all"
+        - name: NVIDIA_DRIVER_CAPABILITIES
+          value: "compute,utility"
+        - name: LD_LIBRARY_PATH
+          value: "/usr/local/cuda/lib64:/usr/local/cuda/lib"
+      resources:
+        limits:
+          nvidia.com/gpu: "1"
+        requests:
+          nvidia.com/gpu: "1"
+  transformer:
+    annotations:
+      autoscaling.knative.dev/min-scale: "1"
+    containers:
+      - name: kserve-container
+        image: tomasconti02/cnn-transformer-cuda:v1
+        command:
+          - python
+          - -m
+          - transformer
+        args:
+          - --model_names
+          - simple-cnn,simple-cnn-test
+          - --namespace
+          - default
+          - --predictor_port
+          - "8080"
+          - --broker
+          - http://kafka-broker-ingress.knative-eventing.svc.cluster.local/default/kafka-broker
+          - --broker_host
+          - kafka-broker-ingress.knative-eventing.svc.cluster.local
+          - --ce_type
+          - org.kubeflow.serving.inference.request
+
+```
