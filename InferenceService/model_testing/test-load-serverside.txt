@@ -1,0 +1,41 @@
+    execution: local
+        script: load.js
+        output: -
+
+     scenarios: (100.00%) 3 scenarios, 30 max VUs, 25m0s max duration (incl. graceful stop):
+              * test_model_1: Up to 30 looping VUs for 7m30s over 6 stages (gracefulRampDown: 30s, exec: testModel1, gracefulStop: 30s)
+              * test_alternating: Up to 30 looping VUs for 7m30s over 6 stages (gracefulRampDown: 30s, exec: testAlternating, startTime: 8m30s, gracefulStop: 30s)
+              * test_batch: Up to 30 looping VUs for 7m30s over 6 stages (gracefulRampDown: 30s, exec: testBatchEndpoint, startTime: 17m0s, gracefulStop: 30s)
+
+INFO[1471] [k6-reporter v3.0.4] Generating HTML summary report, with theme: default  source=console
+     ✗ status is 200
+      ↳  99% — ✓ 8398 / ✗ 5
+     ✗ body has predicted_class
+      ↳  99% — ✓ 8398 / ✗ 5
+     ✓ batch status is 200
+     ✓ batch body has content
+
+   ✓ alternating_inference_processing_time...: avg=1630.863794 min=136.136281 med=1472.594622 max=10008.864093 p(90)=3005.256574 p(95)=3197.057335
+   ✓ batch_inference_processing_time.........: avg=1700.163583 min=176.116158 med=1560.465014 max=9521.849514  p(90)=2874.309075 p(95)=3402.562617
+     checks..................................: 99.95% ✓ 24530    ✗ 10   
+     data_received...........................: 2.6 MB 1.8 kB/s
+     data_sent...............................: 13 MB  8.9 kB/s
+     http_req_blocked........................: avg=15.61µs     min=2.7µs      med=6.75µs      max=57.18ms      p(90)=9.86µs      p(95)=12.43µs    
+     http_req_connecting.....................: avg=580ns       min=0s         med=0s          max=342.94µs     p(90)=0s          p(95)=0s         
+     http_req_duration.......................: avg=1.59s       min=136.13ms   med=1.47s       max=10s          p(90)=2.76s       p(95)=3.13s      
+       { expected_response:true }............: avg=1.59s       min=136.13ms   med=1.47s       max=10s          p(90)=2.77s       p(95)=3.13s      
+   ✓ http_req_failed.........................: 0.04%  ✓ 5        ✗ 12265
+     http_req_receiving......................: avg=126.41µs    min=19.59µs    med=74.49µs     max=123.67ms     p(90)=115.5µs     p(95)=136.95µs   
+     http_req_sending........................: avg=55.04µs     min=8.08µs     med=31.17µs     max=116.27ms     p(90)=47.85µs     p(95)=57.45µs    
+     http_req_tls_handshaking................: avg=0s          min=0s         med=0s          max=0s           p(90)=0s          p(95)=0s         
+     http_req_waiting........................: avg=1.59s       min=136.01ms   med=1.47s       max=10s          p(90)=2.76s       p(95)=3.13s      
+     http_reqs...............................: 12270  8.344849/s
+     iteration_duration......................: avg=1.79s       min=337.37ms   med=1.67s       max=10.2s        p(90)=2.97s       p(95)=3.33s      
+     iterations..............................: 12270  8.344849/s
+   ✓ model1_inference_processing_time........: avg=1471.475782 min=150.214486 med=1395.794722 max=6664.239259  p(90)=2338.802314 p(95)=2537.018171
+     vus.....................................: 1      min=0      max=30 
+
+running (24m30.4s), 00/30 VUs, 12270 complete and 0 interrupted iterations
+test_model_1     ✓ [======================================] 00/30 VUs  7m30s
+test_alternating ✓ [======================================] 00/30 VUs  7m30s
+test_batch       ✓ [======================================] 00/30 VUs  7m30s
