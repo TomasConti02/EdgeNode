@@ -12,6 +12,7 @@ EdgeNode is a Kubernetes-based AI inference platform designed to serve machine l
   - [ Inference Docker ](InferenceService/model/Docker.transformer)
   - [ Inference models weights loader yaml](InferenceService/01-jobs-and-pvcs.yaml)
   - [ Inference service yaml](InferenceService/02-inferenceservices.yaml)
+  - [ Inference service batch with gpu ](InferenceService/03-inferenceservices.yaml)
 
 - [ Strimzi Kafka cluster ](Knative_Eventing/Kafka/Kafka_cluster_multi_node.yaml)
 
@@ -21,6 +22,8 @@ EdgeNode is a Kubernetes-based AI inference platform designed to serve machine l
   - [ OOD detector Docker ](Drift/Dockerfile)
 
 - [ K6 test script ](InferenceService/model_testing/test-load.js)
+  - [ K6 test script results txt ](InferenceService/model_testing/test-load.txt)
+  - [ K6 test script results browser  ](InferenceService/model_testing/report-sequential_alternating.html)
 --------------------------------------------------------------------------
 
 ### Kiali high level view of the system result
