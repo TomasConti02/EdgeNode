@@ -5,26 +5,26 @@
      scenarios: (100.00%) 1 scenario, 30 max VUs, 10m30s max duration (incl. graceful stop):
               * default: Up to 30 looping VUs for 10m0s over 5 stages (gracefulRampDown: 30s, gracefulStop: 30s)
 
-INFO[0602] [k6-reporter v3.0.4] Generating HTML summary report, with theme: default  source=console
+INFO[0601] [k6-reporter v3.0.4] Generating HTML summary report, with theme: default  source=console
      ✓ status is 200
      ✓ has predicted_class
 
-     checks.........................: 100.00% ✓ 10192    ✗ 0   
-     data_received..................: 744 kB  1.2 kB/s
-     data_sent......................: 4.2 MB  7.0 kB/s
-     http_req_blocked...............: avg=83.78µs    min=2.34µs    med=6.96µs      max=328.84ms    p(90)=10.58µs     p(95)=13.28µs    
-     http_req_connecting............: avg=9.07µs     min=0s        med=0s          max=6.5ms       p(90)=0s          p(95)=0s         
-     http_req_duration..............: avg=2.07s      min=93.79ms   med=2.19s       max=4.13s       p(90)=3.26s       p(95)=3.41s      
-       { expected_response:true }...: avg=2.07s      min=93.79ms   med=2.19s       max=4.13s       p(90)=3.26s       p(95)=3.41s      
-   ✓ http_req_failed................: 0.00%   ✓ 0        ✗ 5096
-     http_req_receiving.............: avg=621.97µs   min=35.34µs   med=436.85µs    max=204.12ms    p(90)=891.76µs    p(95)=1.07ms     
-     http_req_sending...............: avg=76.14µs    min=7.76µs    med=30.8µs      max=208.38ms    p(90)=49.73µs     p(95)=58.81µs    
-     http_req_tls_handshaking.......: avg=0s         min=0s        med=0s          max=0s          p(90)=0s          p(95)=0s         
-     http_req_waiting...............: avg=2.07s      min=92.72ms   med=2.19s       max=4.13s       p(90)=3.26s       p(95)=3.41s      
-     http_reqs......................: 5096    8.489582/s
-   ✓ inference_processing_time......: avg=2076.46389 min=93.795799 med=2193.954292 max=4134.793075 p(90)=3266.755555 p(95)=3419.887776
-     iteration_duration.............: avg=2.27s      min=296.74ms  med=2.39s       max=4.33s       p(90)=3.46s       p(95)=3.62s      
-     iterations.....................: 5096    8.489582/s
-     vus............................: 1       min=1      max=30
+     checks.........................: 100.00% ✓ 13956     ✗ 0   
+     data_received..................: 1.0 MB  1.7 kB/s
+     data_sent......................: 5.7 MB  9.6 kB/s
+     http_req_blocked...............: avg=18.48µs     min=3.11µs    med=6.28µs     max=8.97ms      p(90)=10.19µs    p(95)=13.24µs    
+     http_req_connecting............: avg=6.84µs      min=0s        med=0s         max=5.05ms      p(90)=0s         p(95)=0s         
+     http_req_duration..............: avg=1.45s       min=32.68ms   med=1.54s      max=6.92s       p(90)=2.15s      p(95)=2.29s      
+       { expected_response:true }...: avg=1.45s       min=32.68ms   med=1.54s      max=6.92s       p(90)=2.15s      p(95)=2.29s      
+   ✓ http_req_failed................: 0.00%   ✓ 0         ✗ 6978
+     http_req_receiving.............: avg=470.61µs    min=31.5µs    med=336.38µs   max=108.4ms     p(90)=846.33µs   p(95)=1.11ms     
+     http_req_sending...............: avg=41.72µs     min=8.73µs    med=23µs       max=25.68ms     p(90)=47.37µs    p(95)=57.48µs    
+     http_req_tls_handshaking.......: avg=0s          min=0s        med=0s         max=0s          p(90)=0s         p(95)=0s         
+     http_req_waiting...............: avg=1.45s       min=32.12ms   med=1.54s      max=6.92s       p(90)=2.15s      p(95)=2.29s      
+     http_reqs......................: 6978    11.620942/s
+   ✓ inference_processing_time......: avg=1459.971803 min=32.684168 med=1549.37697 max=6929.807142 p(90)=2155.65999 p(95)=2294.017439
+     iteration_duration.............: avg=1.66s       min=233.59ms  med=1.75s      max=7.13s       p(90)=2.35s      p(95)=2.49s      
+     iterations.....................: 6978    11.620942/s
+     vus............................: 1       min=1       max=30
 
-running (10m00.3s), 00/30 VUs, 5096 complete and 0 interrupted iterations
+running (10m00.5s), 00/30 VUs, 6978 complete and 0 interrupted iterations
