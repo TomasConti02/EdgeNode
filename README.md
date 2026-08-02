@@ -33,7 +33,7 @@ EdgeNode is a Kubernetes-based AI inference platform designed to serve machine l
   - [ node port conf ](InferenceService/service-node-ports.yaml)
 
 - [ K6 test script ](InferenceService/model_testing/load_light.js)
-  - [ K6 test script results txt  remote ](InferenceService/model_testing/remote_report_lightv1.txt)
+  - [ K6 test script results txt  remote ](InferenceService/model_testing/remote_report_lightv2.txt)
   - [ K6 test script results txt  server side](InferenceService/model_testing/report_lightv1.txt)
 
 --------------------------------------------------------------------------
