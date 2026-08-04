@@ -26,7 +26,7 @@ EdgeNode is a Kubernetes-based AI inference platform designed to serve machine l
   - [ K6 test script results browser  ](InferenceService/model_testing/kserve-inference-report.html)
   - [ K6 test script results txt  server side](InferenceService/model_testing/test-load-serverside.txt)
 --------------------------------------------------------------------------
-## New Inference Service Light
+## Inference Service Light, no serverless and istio support
 
 - [ Inference entry point Light](InferenceService/model/tranformer_edge_lightv1.py)
   - [ Inference service yaml](InferenceService/05-inference-service-light.yaml)
@@ -37,15 +37,14 @@ EdgeNode is a Kubernetes-based AI inference platform designed to serve machine l
   - [ K6 test script results txt  remote ](InferenceService/model_testing/remote_report_lightv3.txt)
   - [ K6 test script results txt  server side](InferenceService/model_testing/report_lightv1.txt)
 
-## New Inference Service Light
+## Inference Service Light, no serverless and istio support with into the same pod predictor and transformer
 
 - [ Inference entry point shared](InferenceService/model/transformer_shared.yaml)
   - [ Inference service yaml](InferenceService/06-inference-shared.yaml)
 
-
 - [ K6 test script ](InferenceService/model_testing/load_lightv2.js)
   - [ K6 test script results txt  remote ](InferenceService/model_testing/remote_report_sharedv1.txt)
-  - [ K6 test script results txt  server side](InferenceService/model_testing/report_lightv1.txt)
+  - [ K6 test script results txt  server side](InferenceService/model_testing/serve_side_report_sharedv1.txt)
 
 
 --------------------------------------------------------------------------
