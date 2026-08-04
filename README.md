@@ -33,11 +33,20 @@ EdgeNode is a Kubernetes-based AI inference platform designed to serve machine l
   - [ node port conf ](InferenceService/service-node-ports.yaml)
 
 
-  
-
 - [ K6 test script ](InferenceService/model_testing/load_light.js)
   - [ K6 test script results txt  remote ](InferenceService/model_testing/remote_report_lightv3.txt)
   - [ K6 test script results txt  server side](InferenceService/model_testing/report_lightv1.txt)
+
+## New Inference Service Light
+
+- [ Inference entry point shared](InferenceService/model/transformer_shared.yaml)
+  - [ Inference service yaml](InferenceService/06-inference-shared.yaml)
+
+
+- [ K6 test script ](InferenceService/model_testing/load_lightv2.js)
+  - [ K6 test script results txt  remote ](InferenceService/model_testing/remote_report_sharedv1.txt)
+  - [ K6 test script results txt  server side](InferenceService/model_testing/report_lightv1.txt)
+
 
 --------------------------------------------------------------------------
 sudo openvpn --dev tun --config pfSense-UDP4-3465-connect-config.ovpn
@@ -439,6 +448,15 @@ curl -X POST "http://localhost:8080/predict?model=simple-cnn-test" \
 {"predicted_class":0}
 
 -------------------------------------------------------------------------------------------------
+
+#shared 
+curl -v -X POST "http://localhost:8080/v1/models/simple-cnn-test:predict" \
+  -H "Content-Type: application/octet-stream" \
+  --data-binary "@immagine.png"
+
+
+---------------------------------------------
+
 
 curl -X POST "http://localhost:8080/predict_batch?models=simple-cnn,simple-cnn-test" \
   -H "Host: image-api.default.example.com" \
