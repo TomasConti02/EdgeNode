@@ -39,7 +39,7 @@ EdgeNode is a Kubernetes-based AI inference platform designed to serve machine l
 
 ## Inference Service Light, no serverless and istio support with into the same pod predictor and transformer
 
-- [ Inference entry point shared](InferenceService/model/transformer_shared.yaml)
+- [ Inference entry point shared](InferenceService/07-inference-shared-optimized.py)
   - [ Inference service yaml](InferenceService/06-inference-shared.yaml)
 
 - [ K6 test script ](InferenceService/model_testing/load_lightv2.js)
