@@ -43,7 +43,7 @@ EdgeNode is a Kubernetes-based AI inference platform designed to serve machine l
   - [ Inference service yaml](InferenceService/06-inference-shared.yaml)
 
 - [ K6 test script ](InferenceService/model_testing/load_lightv2.js)
-  - [ K6 test script results txt  remote ](InferenceService/model_testing/remote_report_sharedv2.txt)
+  - [ K6 test script results txt  remote ](InferenceService/model_testing/remote_report_sharedv3.txt)
   - [ K6 test script results txt  server side](InferenceService/model_testing/serve_side_report_sharedv2.txt)
 
 
