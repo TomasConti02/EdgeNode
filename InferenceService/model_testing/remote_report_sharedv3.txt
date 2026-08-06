@@ -9,6 +9,39 @@ INFO[0600] [k6-reporter v3.0.4] Generating HTML summary report, with theme: defa
      ✓ status is 200
      ✓ has predicted_class
 
+     checks.........................: 100.00% ✓ 16900     ✗ 0   
+     data_received..................: 1.2 MB  2.1 kB/s
+     data_sent......................: 7.1 MB  12 kB/s
+     http_req_blocked...............: avg=180.27µs    min=1.33µs    med=8.45µs     max=35.34ms     p(90)=11.29µs     p(95)=12.68µs     p(99)=35.49µs    
+     http_req_connecting............: avg=170.64µs    min=0s        med=0s         max=35.03ms     p(90)=0s          p(95)=0s          p(99)=0s         
+     http_req_duration..............: avg=1.17s       min=48.22ms   med=1.31s      max=2.14s       p(90)=1.64s       p(95)=1.64s       p(99)=1.82s      
+       { expected_response:true }...: avg=1.17s       min=48.22ms   med=1.31s      max=2.14s       p(90)=1.64s       p(95)=1.64s       p(99)=1.82s      
+   ✓ http_req_failed................: 0.00%   ✓ 0         ✗ 8450
+     http_req_receiving.............: avg=313.03µs    min=9.35µs    med=93.45µs    max=506.44ms    p(90)=403.02µs    p(95)=1.11ms      p(99)=1.81ms     
+     http_req_sending...............: avg=36.29µs     min=3.44µs    med=30.64µs    max=1.3ms       p(90)=46.57µs     p(95)=59.56µs     p(99)=211.1µs    
+     http_req_tls_handshaking.......: avg=0s          min=0s        med=0s         max=0s          p(90)=0s          p(95)=0s          p(99)=0s         
+     http_req_waiting...............: avg=1.17s       min=47.9ms    med=1.31s      max=1.93s       p(90)=1.64s       p(95)=1.64s       p(99)=1.82s      
+     http_reqs......................: 8450    14.078126/s
+   ✓ inference_processing_time......: avg=1171.234949 min=48.222882 med=1319.25047 max=2147.694881 p(90)=1641.951276 p(95)=1644.968832 p(99)=1825.892782
+     iteration_duration.............: avg=1.37s       min=253.01ms  med=1.52s      max=2.34s       p(90)=1.84s       p(95)=1.84s       p(99)=2.02s      
+     iterations.....................: 8450    14.078126/s
+     vus............................: 1       min=1       max=30
+
+running (10m00.2s), 00/30 VUs, 8450 complete and 0 interrupted iterations
+
+
+
+    execution: local
+        script: load_lightv2.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 30 max VUs, 10m30s max duration (incl. graceful stop):
+              * default: Up to 30 looping VUs for 10m0s over 5 stages (gracefulRampDown: 30s, gracefulStop: 30s)
+
+INFO[0600] [k6-reporter v3.0.4] Generating HTML summary report, with theme: default  source=console
+     ✓ status is 200
+     ✓ has predicted_class
+
      checks.........................: 100.00% ✓ 17248     ✗ 0   
      data_received..................: 1.3 MB  2.1 kB/s
      data_sent......................: 7.3 MB  12 kB/s
