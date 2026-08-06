@@ -5,6 +5,69 @@
      scenarios: (100.00%) 1 scenario, 30 max VUs, 10m30s max duration (incl. graceful stop):
               * default: Up to 30 looping VUs for 10m0s over 5 stages (gracefulRampDown: 30s, gracefulStop: 30s)
 
+INFO[0601] [k6-reporter v3.0.4] Generating HTML summary report, with theme: default  source=console
+     ✓ status is 200
+     ✓ has predicted_class
+
+     checks.........................: 100.00% ✓ 18742     ✗ 0   
+     data_received..................: 1.7 MB  2.9 kB/s
+     data_sent......................: 8.1 MB  14 kB/s
+     http_req_blocked...............: avg=380.78µs    min=1.52µs    med=9.25µs      max=2.04s       p(90)=11.98µs     p(95)=13.22µs     p(99)=28.73µs    
+     http_req_connecting............: avg=370.91µs    min=0s        med=0s          max=2.04s       p(90)=0s          p(95)=0s          p(99)=0s         
+     http_req_duration..............: avg=1.03s       min=35.02ms   med=1.14s       max=4.71s       p(90)=1.5s        p(95)=1.57s       p(99)=1.81s      
+       { expected_response:true }...: avg=1.03s       min=35.02ms   med=1.14s       max=4.71s       p(90)=1.5s        p(95)=1.57s       p(99)=1.81s      
+   ✓ http_req_failed................: 0.00%   ✓ 0         ✗ 9371
+     http_req_receiving.............: avg=98.73µs     min=12.06µs   med=99.65µs     max=676.07µs    p(90)=128.26µs    p(95)=139.86µs    p(99)=181.13µs   
+     http_req_sending...............: avg=36.43µs     min=4.95µs    med=35.19µs     max=588.01µs    p(90)=47.35µs     p(95)=53.62µs     p(99)=104.12µs   
+     http_req_tls_handshaking.......: avg=0s          min=0s        med=0s          max=0s          p(90)=0s          p(95)=0s          p(99)=0s         
+     http_req_waiting...............: avg=1.03s       min=34.85ms   med=1.14s       max=4.71s       p(90)=1.5s        p(95)=1.57s       p(99)=1.81s      
+     http_reqs......................: 9371    15.616544/s
+   ✓ inference_processing_time......: avg=1035.883935 min=35.025469 med=1146.467468 max=4713.476441 p(90)=1505.413383 p(95)=1574.068676 p(99)=1810.679638
+     iteration_duration.............: avg=1.23s       min=235.79ms  med=1.34s       max=4.91s       p(90)=1.7s        p(95)=1.77s       p(99)=2.01s      
+     iterations.....................: 9371    15.616544/s
+     vus............................: 1       min=1       max=30
+
+
+     execution: local
+        script: load_light_istio.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 30 max VUs, 10m30s max duration (incl. graceful stop):
+              * default: Up to 30 looping VUs for 10m0s over 5 stages (gracefulRampDown: 30s, gracefulStop: 30s)
+
+INFO[0605] [k6-reporter v3.0.4] Generating HTML summary report, with theme: default  source=console
+     ✓ status is 200
+     ✓ has predicted_class
+
+     checks.........................: 100.00% ✓ 18698     ✗ 0   
+     data_received..................: 1.7 MB  2.9 kB/s
+     data_sent......................: 8.1 MB  14 kB/s
+     http_req_blocked...............: avg=615.07µs    min=1.45µs    med=9.25µs      max=1.07s       p(90)=11.89µs     p(95)=13.08µs     p(99)=27.3µs     
+     http_req_connecting............: avg=605.36µs    min=0s        med=0s          max=1.07s       p(90)=0s          p(95)=0s          p(99)=0s         
+     http_req_duration..............: avg=1.03s       min=36.58ms   med=1.15s       max=6.99s       p(90)=1.5s        p(95)=1.58s       p(99)=1.7s       
+       { expected_response:true }...: avg=1.03s       min=36.58ms   med=1.15s       max=6.99s       p(90)=1.5s        p(95)=1.58s       p(99)=1.7s       
+   ✓ http_req_failed................: 0.00%   ✓ 0         ✗ 9349
+     http_req_receiving.............: avg=98.3µs      min=13.47µs   med=100.9µs     max=433.13µs    p(90)=128.77µs    p(95)=138.47µs    p(99)=167.23µs   
+     http_req_sending...............: avg=37.71µs     min=4.47µs    med=35.42µs     max=2.13ms      p(90)=46.76µs     p(95)=52.16µs     p(99)=131.2µs    
+     http_req_tls_handshaking.......: avg=0s          min=0s        med=0s          max=0s          p(90)=0s          p(95)=0s          p(99)=0s         
+     http_req_waiting...............: avg=1.03s       min=36.43ms   med=1.15s       max=6.99s       p(90)=1.5s        p(95)=1.58s       p(99)=1.7s       
+     http_reqs......................: 9349    15.578937/s
+   ✓ inference_processing_time......: avg=1038.589378 min=36.587628 med=1156.785015 max=6992.018359 p(90)=1507.458599 p(95)=1580.300868 p(99)=1702.393114
+     iteration_duration.............: avg=1.24s       min=237.5ms   med=1.35s       max=7.19s       p(90)=1.7s        p(95)=1.78s       p(99)=1.9s       
+     iterations.....................: 9349    15.578937/s
+     vus............................: 1       min=1       max=30
+
+running (10m00.1s), 00/30 VUs, 9349 complete and 0 interrupted iterations
+
+
+
+     execution: local
+        script: load_light_istio.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 30 max VUs, 10m30s max duration (incl. graceful stop):
+              * default: Up to 30 looping VUs for 10m0s over 5 stages (gracefulRampDown: 30s, gracefulStop: 30s)
+
 INFO[0600] [k6-reporter v3.0.4] Generating HTML summary report, with theme: default  source=console
      ✓ status is 200
      ✓ has predicted_class
