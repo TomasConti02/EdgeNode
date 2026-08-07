@@ -59,34 +59,54 @@ class ImageTransformer(Model):
         self.detector_host = f"ood-detector-{self.name}.default.example.com"
         self.predictor_host = f"127.0.0.1:{predictor_port}"
         
-        # Sessione HTTP asincrona per-processo (inizializzata alla prima richiesta o tramite hook)
         self._session: Optional[aiohttp.ClientSession] = None
 
     async def _get_session(self) -> aiohttp.ClientSession:
         if self._session is None or self._session.closed:
-            connector = aiohttp.TCPConnector(limit=100, keepalive_timeout=60, enable_cleanup_closed=True)
+            # Connettore ottimizzato con limiti alti per gestire picchi di traffico concorrente
+            connector = aiohttp.TCPConnector(limit=500, limit_per_host=100, keepalive_timeout=60, enable_cleanup_closed=True)
             self._session = aiohttp.ClientSession(connector=connector)
         return self._session
 
-    async def _send_to_kafka(self, preds: list, image_key: str):
-        session = await self._get_session()
-        payload = { "image_key": image_key, "instances": [p["embedding"][:4] for p in preds if "embedding" in p] } 
-        headers = { "Host": self.broker_host, "Ce-Id": str(uuid.uuid4()), "Ce-Specversion": "1.0", "Ce-Type": self.ce_type, "Ce-Source": self.name, "Content-Type": "application/json", "X-Image-Key": image_key }
+    async def _send_to_kafka_safe(self, preds: list, image_key: str):
         try:
+            session = await self._get_session()
+            # Estrazione ottimizzata delle sole feature necessarie
+            embeddings = [p["embedding"][:4] for p in preds if "embedding" in p]
+            if not embeddings:
+                return
+                
+            payload = { "image_key": image_key, "instances": embeddings } 
+            headers = { 
+                "Host": self.broker_host, 
+                "Ce-Id": str(uuid.uuid4()), 
+                "Ce-Specversion": "1.0", 
+                "Ce-Type": self.ce_type, 
+                "Ce-Source": self.name, 
+                "Content-Type": "application/json", 
+                "X-Image-Key": image_key 
+            }
             async with session.post(self.broker, json=payload, headers=headers, timeout=aiohttp.ClientTimeout(total=3)) as response:
                 response.raise_for_status()
         except Exception as e:
-            logger.error("Kafka ERROR for key %s: %s", image_key, e)
+            logger.error("Kafka Fire-and-Forget ERROR for key %s: %s", image_key, e)
 
-    async def _store_image_to_detector(self, img: bytes, filename: str, content_type: str, image_key: str):
-        session = await self._get_session()
-        headers = { "Host": self.detector_host, "Content-Type": content_type, "X-Filename": filename, "X-TTL": "600", "X-Metadata": self.name, "X-Image-Key": image_key, }
-        url = f"{self.istio_gateway}/store_image"
+    async def _store_image_to_detector_safe(self, img: bytes, filename: str, content_type: str, image_key: str):
         try:
+            session = await self._get_session()
+            headers = { 
+                "Host": self.detector_host, 
+                "Content-Type": content_type, 
+                "X-Filename": filename, 
+                "X-TTL": "600", 
+                "X-Metadata": self.name, 
+                "X-Image-Key": image_key 
+            }
+            url = f"{self.istio_gateway}/store_image"
             async with session.post(url, headers=headers, data=img, timeout=aiohttp.ClientTimeout(total=15)) as response:
                 response.raise_for_status()
         except Exception as e:
-            logger.error("ERROR saving image with Redis key %s: %s", image_key, e)
+            logger.error("Detector Fire-and-Forget ERROR saving image with key %s: %s", image_key, e)
 
     def preprocess(self, payload: bytes, headers: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
         image_key = None
@@ -104,15 +124,15 @@ class ImageTransformer(Model):
         if not image_key:
             image_key = str(uuid.uuid4())
             
-        # Lancia il salvataggio asincrono in background sul loop di eventi corrente senza bloccare la richiesta
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             
-        loop.create_task(self._store_image_to_detector(payload, filename, content_type, image_key))
+        loop.create_task(self._store_image_to_detector_safe(payload, filename, content_type, image_key))
 
+        # Conversione ed elaborazione immagine con OpenCV (ottimizzata in-place)
         np_arr = np.frombuffer(payload, dtype=np.uint8)
         img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -137,14 +157,13 @@ class ImageTransformer(Model):
                     break
         preds = outputs["predictions"]
         
-        # Lancia l'invio a Kafka in background senza bloccare la risposta HTTP
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             
-        loop.create_test = loop.create_task(self._send_to_kafka(preds, image_key))
+        loop.create_task(self._send_to_kafka_safe(preds, image_key))
             
         return {"predicted_class": int(preds[0]["predicted_class"])}
 
