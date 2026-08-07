@@ -1,0 +1,205 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: simple-cnn-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: simple-cnn-copy-job
+  namespace: default
+spec:
+  ttlSecondsAfterFinished: 60
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: model-writer
+          image: tomasconti02/restnet18_32fp:v1
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -e
+              echo "=== Struttura sorgente ==="
+              ls -la /app/model/ || true
+              ls -la /app/model/1/ 2>/dev/null || true
+
+              echo "=== Pulizia e preparazione ==="
+              rm -rf /mnt/models/simple-cnn
+              mkdir -p /mnt/models/simple-cnn/1/model.savedmodel
+
+              echo "=== Copia modello ==="
+              if [ -f /app/model/saved_model.pb ]; then
+                echo "Copio da /app/model/ -> 1/model.savedmodel/"
+                cp -r /app/model/* /mnt/models/simple-cnn/1/model.savedmodel/
+              elif [ -f /app/model/1/saved_model.pb ]; then
+                echo "Copio da /app/model/1/ -> 1/model.savedmodel/"
+                cp -r /app/model/1/* /mnt/models/simple-cnn/1/model.savedmodel/
+              else
+                echo "ERRORE: saved_model.pb non trovato in nessuna posizione attesa!"
+                exit 1
+              fi
+
+              echo "=== Verifica destinazione ==="
+              ls -la /mnt/models/simple-cnn/1/model.savedmodel/
+
+              echo "=== Scrittura config.pbtxt ==="
+              cat << 'EOF' > /mnt/models/simple-cnn/config.pbtxt
+              name: "simple-cnn"
+              platform: "tensorflow_savedmodel"
+              max_batch_size: 4
+              dynamic_batching {
+                max_queue_delay_microseconds: 5000
+              }
+              input [
+                {
+                  name: "input"
+                  data_type: TYPE_FP32
+                  dims: [ 224, 224, 3 ]
+                }
+              ]
+              output [
+                {
+                  name: "probabilities"
+                  data_type: TYPE_FP32
+                  dims: [ 10 ]
+                },
+                {
+                  name: "embedding"
+                  data_type: TYPE_FP32
+                  dims: [ 512 ]
+                },
+                {
+                  name: "predicted_class"
+                  data_type: TYPE_INT32
+                  dims: [ ]
+                }
+              ]
+              instance_group [
+                {
+                  count: 1
+                  kind: KIND_GPU
+                  gpus: [ 0 ]
+                }
+              ]
+              EOF
+
+              echo "=== OK: simple-cnn pronto ==="
+          volumeMounts:
+            - name: model-storage
+              mountPath: /mnt/models
+      volumes:
+        - name: model-storage
+          persistentVolumeClaim:
+            claimName: simple-cnn-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: simple-cnn-test-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: simple-cnn-test-copy-job
+  namespace: default
+spec:
+  ttlSecondsAfterFinished: 60
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: model-writer
+          image: tomasconti02/restnet18_32fp:v1
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -e
+              echo "=== Struttura sorgente ==="
+              ls -la /app/model/ || true
+              ls -la /app/model/1/ 2>/dev/null || true
+
+              echo "=== Pulizia e preparazione ==="
+              rm -rf /mnt/models/simple-cnn-test
+              mkdir -p /mnt/models/simple-cnn-test/1/model.savedmodel
+
+              echo "=== Copia modello ==="
+              if [ -f /app/model/saved_model.pb ]; then
+                echo "Copio da /app/model/ -> 1/model.savedmodel/"
+                cp -r /app/model/* /mnt/models/simple-cnn-test/1/model.savedmodel/
+              elif [ -f /app/model/1/saved_model.pb ]; then
+                echo "Copio da /app/model/1/ -> 1/model.savedmodel/"
+                cp -r /app/model/1/* /mnt/models/simple-cnn-test/1/model.savedmodel/
+              else
+                echo "ERRORE: saved_model.pb non trovato!"
+                exit 1
+              fi
+
+              echo "=== Verifica destinazione ==="
+              ls -la /mnt/models/simple-cnn-test/1/model.savedmodel/
+
+              echo "=== Scrittura config.pbtxt ==="
+              cat << 'EOF' > /mnt/models/simple-cnn-test/config.pbtxt
+              name: "simple-cnn-test"
+              platform: "tensorflow_savedmodel"
+              max_batch_size: 4
+              dynamic_batching {
+                max_queue_delay_microseconds: 5000
+              }
+              input [
+                {
+                  name: "input"
+                  data_type: TYPE_FP32
+                  dims: [ 224, 224, 3 ]
+                }
+              ]
+              output [
+                {
+                  name: "probabilities"
+                  data_type: TYPE_FP32
+                  dims: [ 10 ]
+                },
+                {
+                  name: "embedding"
+                  data_type: TYPE_FP32
+                  dims: [ 512 ]
+                },
+                {
+                  name: "predicted_class"
+                  data_type: TYPE_INT32
+                  dims: [ ]
+                }
+              ]
+              instance_group [
+                {
+                  count: 1
+                  kind: KIND_GPU
+                  gpus: [ 0 ]
+                }
+              ]
+              EOF
+
+              echo "=== OK: simple-cnn-test pronto ==="
+          volumeMounts:
+            - name: model-storage
+              mountPath: /mnt/models
+      volumes:
+        - name: model-storage
+          persistentVolumeClaim:
+            claimName: simple-cnn-test-pvc
