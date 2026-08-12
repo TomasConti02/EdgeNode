@@ -34,10 +34,10 @@ def numpy_to_tensor_proto(array: np.ndarray) -> tensor_pb2.TensorProto:
 
     if array.dtype == np.float32:
         tensor.dtype = DT_FLOAT
-        tensor.float_val.extend(array.flatten().tolist())
+        tensor.tensor_content = array.tobytes()
     elif array.dtype == np.int32:
         tensor.dtype = DT_INT32
-        tensor.int_val.extend(array.flatten().tolist())
+        tensor.tensor_content = array.tobytes()
     else:
         raise ValueError(f"Unsupported NumPy dtype: {array.dtype}")
     
@@ -72,34 +72,39 @@ class ImageTransformer(Model):
         self.detector_host = f"ood-detector-{name}.default.example.com"
 
         self._session: Optional[aiohttp.ClientSession] = None
-        self._channel = None
-        self._stub = None
+        self._grpc_channel: Optional[grpc.aio.Channel] = None
+        self._grpc_stub: Optional[prediction_service_pb2_grpc.PredictionServiceStub] = None
 
-        logger.error("Configured transformer '%s' for TF Serving at %s", self.name, self.predictor_host)
+        logger.error("Configured zero-copy optimized transformer '%s' with async gRPC for TF Serving at %s", self.name, self.predictor_host)
 
-    def _get_tf_stub(self):
-        if self._stub is None:
-            self._channel = grpc.insecure_channel(self.predictor_host)
-            self._stub = prediction_service_pb2_grpc.PredictionServiceStub(self._channel)
-        return self._stub
+    async def _get_tf_stub(self) -> prediction_service_pb2_grpc.PredictionServiceStub:
+        if self._grpc_stub is None:
+            options = [
+                ('grpc.max_receive_message_length', 100 * 1024 * 1024),
+                ('grpc.max_send_message_length', 100 * 1024 * 1024)
+            ]
+            self._grpc_channel = grpc.aio.insecure_channel(self.predictor_host, options=options)
+            self._grpc_stub = prediction_service_pb2_grpc.PredictionServiceStub(self._grpc_channel)
+        return self._grpc_stub
 
-    def _get_session(self) -> aiohttp.ClientSession:
+    async def _get_session(self) -> aiohttp.ClientSession:
         if self._session is None or self._session.closed:
-            connector = aiohttp.TCPConnector(limit=1000, limit_per_host=200, keepalive_timeout=120)
+            connector = aiohttp.TCPConnector(limit=2000, limit_per_host=500, keepalive_timeout=120, force_close=False)
             self._session = aiohttp.ClientSession(connector=connector)
         return self._session
 
-    async def _send_to_kafka(self, embedding: list, image_key: str):
+    async def _send_to_kafka(self, embedding: np.ndarray, image_key: str):
         try:
-            if not embedding:
+            if embedding.size == 0:
                 return
-            payload = {"image_key": image_key, "instances": embedding}
+            payload = {"image_key": image_key, "instances": embedding.tolist()}
             headers = {
                 "Host": self.broker_host, "Ce-Id": uuid.uuid4().hex,
                 "Ce-Specversion": "1.0", "Ce-Type": self.ce_type,
                 "Ce-Source": self.name, "Content-Type": "application/json", "X-Image-Key": image_key
             }
-            async with self._get_session().post(self.broker, json=payload, headers=headers, timeout=aiohttp.ClientTimeout(total=15)) as resp:
+            session = await self._get_session()
+            async with session.post(self.broker, json=payload, headers=headers, timeout=aiohttp.ClientTimeout(total=10)) as resp:
                 if resp.status >= 300:
                     logger.error("Kafka error HTTP %s [%s]", resp.status, image_key)
         except Exception as exc:
@@ -112,7 +117,8 @@ class ImageTransformer(Model):
                 "X-Filename": filename, "X-TTL": "600", "X-Metadata": self.name, "X-Image-Key": image_key
             }
             url = f"{self.istio_gateway}/store_image"
-            async with self._get_session().post(url, headers=headers, data=image, timeout=aiohttp.ClientTimeout(total=15)) as resp:
+            session = await self._get_session()
+            async with session.post(url, headers=headers, data=image, timeout=aiohttp.ClientTimeout(total=10)) as resp:
                 if resp.status >= 300:
                     logger.error("Detector error HTTP %s [%s]", resp.status, image_key)
         except Exception as exc:
@@ -167,8 +173,8 @@ class ImageTransformer(Model):
         request.inputs["input"].CopyFrom(numpy_to_tensor_proto(array))
 
         try:
-            stub = self._get_tf_stub()
-            tf_response = await asyncio.to_thread(stub.Predict, request, timeout=60)
+            stub = await self._get_tf_stub()
+            tf_response = await stub.Predict(request, timeout=30.0)
         except grpc.RpcError as exc:
             logger.error("TF Serving gRPC error [%s]: code=%s details=%s", self.name, exc.code(), exc.details())
             raise
@@ -204,9 +210,8 @@ class ImageTransformer(Model):
 
         embedding = response.get_output_by_name("embedding")
         if embedding is not None:
-            asyncio.create_task(self._send_to_kafka(embedding.as_numpy().tolist(), image_key))
+            asyncio.create_task(self._send_to_kafka(embedding.as_numpy(), image_key))
 
-        # Return a valid InferResponse containing ONLY the predicted class output, satisfying KServe V2 schema validation
         return InferResponse(
             response_id=image_key,
             model_name=self.name,
@@ -220,10 +225,6 @@ class ImageTransformer(Model):
             ]
         )
 
-
-# =====================================================
-# MAIN ENTRYPOINT
-# =====================================================
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_names", required=True)
@@ -239,7 +240,7 @@ if __name__ == "__main__":
         raise ValueError("No models specified")
 
     workers = int(os.getenv("WORKERS", "8"))
-    logger.error("Starting transformer with models=%s workers=%d", models, workers)
+    logger.error("Starting optimized transformer with async gRPC and zero-copy, models=%s workers=%d", models, workers)
 
     transformers = [
         ImageTransformer(
