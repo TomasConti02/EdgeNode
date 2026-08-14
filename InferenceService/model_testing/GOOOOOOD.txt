@@ -1,3 +1,99 @@
+     execution: local
+        script: random_v3.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 30 max VUs, 10m30s max duration (incl. graceful stop):
+              * default: Up to 30 looping VUs for 10m0s over 5 stages (gracefulRampDown: 30s, gracefulStop: 30s)
+
+INFO[0600] [k6-reporter v3.0.4] Generating HTML summary report, with theme: default  source=console
+     ✓ status is 200
+     ✓ has predicted_class output
+
+     checks.........................: 100.00% ✓ 91670     ✗ 0    
+     data_received..................: 17 MB   28 kB/s
+     data_sent......................: 48 MB   79 kB/s
+     http_req_blocked...............: avg=17.36µs   min=1.36µs    med=9.08µs    max=17.43ms    p(90)=11.44µs   p(95)=12.49µs   p(99)=24.9µs  
+     http_req_connecting............: avg=7.93µs    min=0s        med=0s        max=17.26ms    p(90)=0s        p(95)=0s        p(99)=0s      
+     http_req_duration..............: avg=51.59ms   min=17.67ms   med=62.29ms   max=947.38ms   p(90)=67.02ms   p(95)=69.13ms   p(99)=77.6ms  
+       { expected_response:true }...: avg=51.59ms   min=17.67ms   med=62.29ms   max=947.38ms   p(90)=67.02ms   p(95)=69.13ms   p(99)=77.6ms  
+   ✓ http_req_failed................: 0.00%   ✓ 0         ✗ 45835
+     http_req_receiving.............: avg=95.45µs   min=10.18µs   med=94.46µs   max=1.69ms     p(90)=125.16µs  p(95)=136.64µs  p(99)=188.51µs
+     http_req_sending...............: avg=38.03µs   min=5.03µs    med=37.69µs   max=1.54ms     p(90)=48.13µs   p(95)=53.82µs   p(99)=75.38µs 
+     http_req_tls_handshaking.......: avg=0s        min=0s        med=0s        max=0s         p(90)=0s        p(95)=0s        p(99)=0s      
+     http_req_waiting...............: avg=51.46ms   min=17.53ms   med=62.16ms   max=947.16ms   p(90)=66.89ms   p(95)=69ms      p(99)=77.44ms 
+     http_reqs......................: 45835   76.363661/s
+   ✓ inference_processing_time......: avg=51.598995 min=17.678702 med=62.291737 max=947.382054 p(90)=67.028194 p(95)=69.136949 p(99)=77.6073 
+     iteration_duration.............: avg=252.67ms  min=218.43ms  med=263.33ms  max=1.14s      p(90)=268.14ms  p(95)=270.24ms  p(99)=278.96ms
+     iterations.....................: 45835   76.363661/s
+     vus............................: 1       min=1       max=30 
+
+running (10m00.2s), 00/30 VUs, 45835 complete and 0 interrupted iterations
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    execution: local
+        script: random_v2.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 30 max VUs, 10m30s max duration (incl. graceful stop):
+              * default: Up to 30 looping VUs for 10m0s over 5 stages (gracefulRampDown: 30s, gracefulStop: 30s)
+
+INFO[0601] [k6-reporter v3.0.4] Generating HTML summary report, with theme: default  source=console
+     ✓ status is 200
+     ✓ has predicted_class output
+
+     checks.........................: 100.00% ✓ 87662    ✗ 0    
+     data_received..................: 16 MB   26 kB/s
+     data_sent......................: 52 MB   87 kB/s
+     http_req_blocked...............: avg=28.14µs   min=1.85µs    med=8.97µs    max=26.76ms     p(90)=11.94µs   p(95)=14.92µs   p(99)=79.29µs  
+     http_req_connecting............: avg=17.27µs   min=0s        med=0s        max=26.66ms     p(90)=0s        p(95)=0s        p(99)=0s       
+     http_req_duration..............: avg=63.19ms   min=32.07ms   med=75.45ms   max=1.13s       p(90)=79.01ms   p(95)=80.37ms   p(99)=83.81ms  
+       { expected_response:true }...: avg=63.19ms   min=32.07ms   med=75.45ms   max=1.13s       p(90)=79.01ms   p(95)=80.37ms   p(99)=83.81ms  
+   ✓ http_req_failed................: 0.00%   ✓ 0        ✗ 43831
+     http_req_receiving.............: avg=107.01µs  min=16.95µs   med=98.51µs   max=1.68ms      p(90)=172.96µs  p(95)=192.46µs  p(99)=254.03µs 
+     http_req_sending...............: avg=40.64µs   min=7.45µs    med=36.52µs   max=3.39ms      p(90)=55.42µs   p(95)=90.28µs   p(99)=121.53µs 
+     http_req_tls_handshaking.......: avg=0s        min=0s        med=0s        max=0s          p(90)=0s        p(95)=0s        p(99)=0s       
+     http_req_waiting...............: avg=63.05ms   min=31.88ms   med=75.3ms    max=1.13s       p(90)=78.87ms   p(95)=80.24ms   p(99)=83.62ms  
+     http_reqs......................: 43831   73.04112/s
+   ✓ inference_processing_time......: avg=63.198046 min=32.074824 med=75.458482 max=1130.428364 p(90)=79.012722 p(95)=80.373659 p(99)=83.817146
+     iteration_duration.............: avg=264.23ms  min=232.76ms  med=276.46ms  max=1.33s       p(90)=280.06ms  p(95)=281.4ms   p(99)=284.96ms 
+     iterations.....................: 43831   73.04112/s
+     vus............................: 1       min=1      max=30 
+
+running (10m00.1s), 00/30 VUs, 43831 complete and 0 interrupted iterations
+
+     execution: local
+        script: random_v2.js
+        output: -
+
+     scenarios: (100.00%) 1 scenario, 30 max VUs, 10m30s max duration (incl. graceful stop):
+              * default: Up to 30 looping VUs for 10m0s over 5 stages (gracefulRampDown: 30s, gracefulStop: 30s)
+
+INFO[0602] [k6-reporter v3.0.4] Generating HTML summary report, with theme: default  source=console
+     ✓ status is 200
+     ✓ has predicted_class output
+
+     checks.........................: 100.00% ✓ 87464     ✗ 0    
+     data_received..................: 16 MB   26 kB/s
+     data_sent......................: 52 MB   87 kB/s
+     http_req_blocked...............: avg=28.96µs   min=1.92µs    med=9.44µs   max=31.92ms    p(90)=12.68µs   p(95)=23.23µs   p(99)=83.92µs  
+     http_req_connecting............: avg=16.97µs   min=0s        med=0s       max=31.73ms    p(90)=0s        p(95)=0s        p(99)=0s       
+     http_req_duration..............: avg=63.74ms   min=30.28ms   med=74.94ms  max=891.99ms   p(90)=79.43ms   p(95)=81.16ms   p(99)=86.69ms  
+       { expected_response:true }...: avg=63.74ms   min=30.28ms   med=74.94ms  max=891.99ms   p(90)=79.43ms   p(95)=81.16ms   p(99)=86.69ms  
+   ✓ http_req_failed................: 0.00%   ✓ 0         ✗ 43732
+     http_req_receiving.............: avg=118.02µs  min=16.47µs   med=105.52µs max=1.15ms     p(90)=185.42µs  p(95)=202.67µs  p(99)=279.83µs 
+     http_req_sending...............: avg=44.8µs    min=8.46µs    med=39.19µs  max=3.33ms     p(90)=68.05µs   p(95)=99.97µs   p(99)=128.85µs 
+     http_req_tls_handshaking.......: avg=0s        min=0s        med=0s       max=0s         p(90)=0s        p(95)=0s        p(99)=0s       
+     http_req_waiting...............: avg=63.58ms   min=30.18ms   med=74.78ms  max=891.75ms   p(90)=79.26ms   p(95)=81ms      p(99)=86.54ms  
+     http_reqs......................: 43732   72.860968/s
+   ✓ inference_processing_time......: avg=63.743768 min=30.283452 med=74.94044 max=891.991723 p(90)=79.434223 p(95)=81.162186 p(99)=86.698116
+     iteration_duration.............: avg=264.84ms  min=231.2ms   med=275.98ms max=1.09s      p(90)=280.55ms  p(95)=282.27ms  p(99)=287.9ms  
+     iterations.....................: 43732   72.860968/s
+     vus............................: 1       min=1       max=30 
+
+running (10m00.2s), 00/30 VUs, 43732 complete and 0 interrupted iterations
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     execution: local
         script: random.js
         output: -
